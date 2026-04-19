@@ -1,0 +1,206 @@
+{
+  "info": {
+    "name": "Pandora API (127.0.0.1)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "(function(){",
+          "  var sid = pm.collectionVariables.get('sessionid');",
+          "  if (!sid) {",
+          "    pm.sendRequest({",
+          "      url: 'http://127.0.0.1:8000/login_app/login/',",
+          "      method: 'POST',",
+          "      header: { 'Content-Type': 'application/x-www-form-urlencoded' },",
+          "      body: 'work_id=W0001&password=123456'",
+          "    }, function (err, res) {",
+          "      if (!err && res) {",
+          "        var h = res.headers && res.headers.get ? res.headers.get('set-cookie') : (res.headers && res.headers['set-cookie']);",
+          "        if (h) { var m = h.match(/sessionid=([^;]+)/i); if (m) { pm.collectionVariables.set('sessionid', m[1]); } }",
+          "      }",
+          "    });",
+          "  }",
+          "})();"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "登录",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "work_id", "value": "W0001" },
+            { "key": "password", "value": "123456" }
+          ]
+        },
+        "url": "http://127.0.0.1:8000/login_app/login/"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('登录成功', function () {",
+              "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "});",
+              "var setCookie = pm.response.headers.get('Set-Cookie');",
+              "if (setCookie) {",
+              "  var m = setCookie.match(/sessionid=([^;]+)/);",
+              "  if (m) { pm.collectionVariables.set('sessionid', m[1]); }",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "仪表盘",
+      "request": { "method": "GET", "header": [{"key":"Cookie","value":"sessionid={{sessionid}}"}], "url": "http://127.0.0.1:8000/dashboard/api/" },
+      "event": [ { "listen": "test", "script": { "exec": [
+        "pm.test('仪表盘成功', function () {",
+        "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+        "  var j = pm.response.json();",
+        "  pm.expect(j.success).to.be.true;",
+        "  if (j.data && j.data.current_employee_id) {",
+        "    pm.collectionVariables.set('current_employee_id', j.data.current_employee_id);",
+        "  }",
+        "});"
+      ] } } ]
+    },
+    {
+      "name": "任务列表",
+      "request": { "method": "GET", "header": [{"key":"Cookie","value":"sessionid={{sessionid}}"}], "url": "http://127.0.0.1:8000/tasks/api/?view_mode=mine" },
+      "event": [ { "listen": "test", "script": { "exec": [
+        "pm.test('任务列表成功', function () {",
+        "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+        "  var j = pm.response.json();",
+        "  pm.expect(j.success).to.be.true;",
+        "});"
+      ] } } ]
+    },
+    {
+      "name": "创建任务",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" }, {"key":"Cookie","value":"sessionid={{sessionid}}"} ],
+        "body": { "mode": "raw", "raw": "{\n  \"task_name\": \"示例任务 {{ts6}}\",\n  \"description\": \"desc\",\n  \"assignee_id\": {{current_employee_id}}\n}" },
+        "url": "http://127.0.0.1:8000/tasks/api/create/"
+      },
+      "event": [
+        { "listen": "prerequest", "script": { "exec": [
+          "pm.collectionVariables.set('ts6', (Date.now() % 1000000).toString());"
+        ] } },
+        { "listen": "test", "script": { "exec": [
+          "pm.test('创建任务成功', function () {",
+          "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+          "  var j = pm.response.json();",
+          "  pm.expect(j.success).to.be.true;",
+          "  pm.collectionVariables.set('created_task_id', j.task_id);",
+          "});"
+        ] } }
+      ]
+    },
+    {
+      "name": "接取任务",
+      "request": { "method": "POST", "header": [{"key":"Cookie","value":"sessionid={{sessionid}}"}], "url": "http://127.0.0.1:8000/tasks/api/{{created_task_id}}/take/" },
+      "event": [ { "listen": "test", "script": { "exec": [
+        "pm.test('接取任务成功', function () {",
+        "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+        "  var j = pm.response.json();",
+        "  pm.expect(j.success).to.be.true;",
+        "  pm.expect(j.status).to.equal('IN_PROGRESS');",
+        "});"
+      ] } } ]
+    },
+    {
+      "name": "完成任务",
+      "request": { "method": "POST", "header": [{"key":"Cookie","value":"sessionid={{sessionid}}"}], "url": "http://127.0.0.1:8000/tasks/api/{{created_task_id}}/complete/" },
+      "event": [ { "listen": "test", "script": { "exec": [
+        "pm.test('完成任务成功', function () {",
+        "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+        "  var j = pm.response.json();",
+        "  pm.expect(j.success).to.be.true;",
+        "  pm.expect(j.status).to.equal('COMPLETED');",
+        "});"
+      ] } } ]
+    },
+    {
+      "name": "创建日志",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" }, {"key":"Cookie","value":"sessionid={{sessionid}}"} ],
+        "body": { "mode": "raw", "raw": "{\n  \"content\": \"今天完成文档\",\n  \"log_type\": \"WORK\"\n}" },
+        "url": "http://127.0.0.1:8000/logs/api/create/"
+      },
+      "event": [ { "listen": "test", "script": { "exec": [
+        "pm.test('创建日志成功', function () {",
+        "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+        "  var j = pm.response.json();",
+        "  pm.expect(j.success).to.be.true;",
+        "  pm.collectionVariables.set('created_log_id', j.log_id);",
+        "});"
+      ] } } ]
+    },
+    {
+      "name": "更新日志",
+      "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" }, {"key":"Cookie","value":"sessionid={{sessionid}}"} ], "body": { "mode": "raw", "raw": "{\n  \"content\": \"更新后的内容\"\n}" }, "url": "http://127.0.0.1:8000/logs/api/{{created_log_id}}/update/" },
+      "event": [ { "listen": "test", "script": { "exec": [
+        "pm.test('更新日志成功', function () {",
+        "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+        "  var j = pm.response.json();",
+        "  pm.expect(j.success).to.be.true;",
+        "});"
+      ] } } ]
+    },
+    {
+      "name": "删除日志",
+      "request": { "method": "POST", "header": [{"key":"Cookie","value":"sessionid={{sessionid}}"}], "url": "http://127.0.0.1:8000/logs/api/{{created_log_id}}/delete/" },
+      "event": [ { "listen": "test", "script": { "exec": [
+        "pm.test('删除日志成功', function () {",
+        "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+        "  var j = pm.response.json();",
+        "  pm.expect(j.success).to.be.true;",
+        "});"
+      ] } } ]
+    },
+    {
+      "name": "AI看板",
+      "request": { "method": "GET", "header": [{"key":"Cookie","value":"sessionid={{sessionid}}"}], "url": "http://127.0.0.1:8000/ai/api/dashboard/?scope=personal" },
+      "event": [ { "listen": "test", "script": { "exec": [
+        "pm.test('AI看板成功', function () {",
+        "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+        "  var j = pm.response.json();",
+        "  pm.expect(j.success).to.be.true;",
+        "});"
+      ] } } ]
+    },
+    {
+      "name": "MBTI生成",
+      "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" }, {"key":"Cookie","value":"sessionid={{sessionid}}"} ], "body": { "mode": "raw", "raw": "{\n  \"mbti\": \"INTJ\",\n  \"scope\": \"personal\"\n}" }, "url": "http://127.0.0.1:8000/ai/api/mbti/" },
+      "event": [ { "listen": "test", "script": { "exec": [
+        "pm.test('MBTI生成成功', function () {",
+        "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+        "  var j = pm.response.json();",
+        "  pm.expect(j.success).to.be.true;",
+        "});"
+      ] } } ]
+    }
+  ],
+  "variable": [
+    { "key": "created_task_id", "value": "" },
+    { "key": "created_log_id", "value": "" }
+  ]
+}

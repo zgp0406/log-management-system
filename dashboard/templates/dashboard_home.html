@@ -1,0 +1,1623 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}潘多拉工作系统 - 智能掌上工作平台{% endblock %}
+
+{% block extra_css %}
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #3b82f6;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* 顶部导航栏 */
+        .top-navbar {
+            background: var(--bg-white);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 12px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .system-title {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .system-title h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .system-title p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .nav-links a:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary-color);
+        }
+
+        .nav-links a.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--success-color);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success-color);
+        }
+
+        .nav-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--text-secondary);
+        }
+
+        .nav-icon:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary-color);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* 主容器 */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* 欢迎区域 */
+        .welcome-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            color: white;
+        }
+
+        .welcome-section h2 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .welcome-section p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* 任务统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-white);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-card.blue {
+            border-left: 4px solid var(--info-color);
+        }
+
+        .stat-card.green {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .stat-card.yellow {
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .stat-card.red {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stat-card-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .stat-card-icon {
+            font-size: 20px;
+        }
+
+        .stat-card-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* 两列布局 */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        /* 面板 */
+        .panel {
+            background: var(--bg-white);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .panel-action {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .panel-action:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        /* 任务列表 */
+        .task-list {
+            list-style: none;
+        }
+
+        /* 可滚动的任务列表样式 */
+        .task-list[style*="overflow-y"] {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(102, 126, 234, 0.3) var(--bg-light);
+        }
+
+        .task-list[style*="overflow-y"]::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .task-list[style*="overflow-y"]::-webkit-scrollbar-track {
+            background: var(--bg-light);
+            border-radius: 3px;
+        }
+
+        .task-list[style*="overflow-y"]::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.3);
+            border-radius: 3px;
+        }
+
+        .task-list[style*="overflow-y"]::-webkit-scrollbar-thumb:hover {
+            background: rgba(102, 126, 234, 0.5);
+        }
+
+        .task-item {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.3s;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-item:hover {
+            background: var(--bg-light);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .task-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .task-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .task-badge.readonly {
+            background: rgba(107, 114, 128, 0.1);
+            color: var(--text-secondary);
+        }
+
+        .task-badge.editable {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--info-color);
+        }
+
+        .task-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .task-status.completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+
+        .task-status.in-progress {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--info-color);
+        }
+
+        .task-status.pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+        }
+
+        .progress-bar-container {
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+
+        .progress-bar.completed {
+            background: var(--success-color);
+            width: 100%;
+        }
+
+        .progress-bar.in-progress {
+            background: var(--info-color);
+            width: 60%;
+        }
+
+        .progress-bar.pending {
+            background: var(--warning-color);
+            width: 30%;
+        }
+
+        /* 日志列表 */
+        .log-list {
+            list-style: none;
+        }
+
+        .log-item {
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .log-item:last-child {
+            border-bottom: none;
+        }
+
+        .log-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .log-content {
+            font-size: 14px;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.3;
+        }
+
+        @media (max-width: 1024px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 公告栏 */
+        .announcement-section {
+            background: linear-gradient(135deg, #fff, #f3f4f6);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .announcement-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .announcement-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .announcement-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .announcement-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.2s;
+        }
+
+        .announcement-item:hover {
+            transform: translateX(5px);
+        }
+
+        .announcement-item.important {
+            border-left-color: var(--warning-color);
+        }
+
+        .announcement-item.urgent {
+            border-left-color: var(--danger-color);
+        }
+
+        .announcement-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .announcement-subject {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text-primary);
+        }
+
+        .announcement-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .announcement-content {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .pin-icon {
+            color: var(--danger-color);
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 2000; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+            background-color: rgba(0,0,0,0.5); 
+            backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: #ffffff;
+            margin: auto; 
+            padding: 32px;
+            border: none;
+            width: 500px;
+            max-width: 90%; 
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: modalScaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        @keyframes modalScaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .close {
+            color: #9ca3af;
+            font-size: 24px;
+            font-weight: normal;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #f3f4f6;
+        }
+
+        .close:hover {
+            color: var(--danger-color);
+            background: #fee2e2;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: #f9fafb;
+            color: var(--text-primary);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+        }
+
+        .form-col {
+            flex: 1;
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+            cursor: pointer;
+        }
+        
+        .form-check input {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .form-check label {
+            margin: 0;
+            font-weight: normal;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .modal-footer {
+            margin-top: 32px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn-cancel {
+            background: #f3f4f6;
+            color: var(--text-secondary);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel:hover {
+            background: #e5e7eb;
+            color: var(--text-primary);
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            width: auto;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- 主容器 -->
+    <div class="main-container" style="max-width: 1400px; margin: 0 auto; padding: 24px;">
+        <!-- 欢迎区域 -->
+        <div class="welcome-section">
+            <h2>{{ greeting }}, {{ current_employee_name }}</h2>
+            <p>今天是{{ today }}{{ weekday }}，祝您工作顺利！</p>
+        </div>
+
+        <!-- 系统公告 -->
+        {% if announcements %}
+        <div class="announcement-section">
+            <div class="announcement-header">
+                <div class="announcement-title">
+                    <i class="fas fa-bullhorn" style="color: var(--warning-color);"></i>
+                    系统公告
+                </div>
+                {% if has_admin_or_ceo_access %}
+                <button class="panel-action" onclick="openAnnouncementModal()">
+                    <i class="fas fa-plus"></i> 发布公告
+                </button>
+                {% endif %}
+            </div>
+            <div class="announcement-list">
+                {% for ann in announcements %}
+                <div class="announcement-item {% if ann.priority == 'IMPORTANT' %}important{% elif ann.priority == 'URGENT' %}urgent{% endif %}">
+                    <div class="announcement-top">
+                        <div class="announcement-subject">
+                            {% if ann.is_pinned %}<i class="fas fa-thumbtack pin-icon"></i>{% endif %}
+                            {{ ann.title }}
+                        </div>
+                        <div class="announcement-meta">{{ ann.created_at|date:"Y-m-d" }}</div>
+                    </div>
+                    <div class="announcement-content">{{ ann.content|linebreaksbr }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% elif has_admin_or_ceo_access %}
+        <div class="announcement-section">
+            <div class="announcement-header">
+                <div class="announcement-title">
+                    <i class="fas fa-bullhorn" style="color: var(--warning-color);"></i>
+                    系统公告
+                </div>
+                <button class="panel-action" onclick="openAnnouncementModal()">
+                    <i class="fas fa-plus"></i> 发布公告
+                </button>
+            </div>
+            <div class="empty-state" style="padding: 20px;">
+                <i class="fas fa-scroll"></i>
+                <p>暂无公告</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 任务统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card blue">
+                <div class="stat-card-header">
+                    <span class="stat-card-title">今日任务</span>
+                    <i class="fas fa-check-circle stat-card-icon" style="color: var(--info-color);"></i>
+                </div>
+                <div class="stat-card-value">{{ task_stats.today_total }}</div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-card-header">
+                    <span class="stat-card-title">已完成</span>
+                    <i class="fas fa-check stat-card-icon" style="color: var(--success-color);"></i>
+                </div>
+                <div class="stat-card-value">{{ task_stats.completed }}</div>
+            </div>
+            <div class="stat-card yellow">
+                <div class="stat-card-header">
+                    <span class="stat-card-title">进行中</span>
+                    <i class="fas fa-spinner stat-card-icon" style="color: var(--warning-color);"></i>
+                </div>
+                <div class="stat-card-value">{{ task_stats.in_progress }}</div>
+            </div>
+            <div class="stat-card red">
+                <div class="stat-card-header">
+                    <span class="stat-card-title">待处理</span>
+                    <i class="fas fa-exclamation-circle stat-card-icon" style="color: var(--danger-color);"></i>
+                </div>
+                <div class="stat-card-value">{{ task_stats.pending }}</div>
+            </div>
+        </div>
+
+        <!-- 主内容区域（两列布局） -->
+        <div class="content-grid">
+            <!-- 左列 -->
+            <div>
+                <!-- 公司十大任务（所有员工都可见，但只有管理员可以编辑） -->
+                {% if company_tasks %}
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">公司十大任务</h3>
+                        {% if has_admin_or_ceo_access %}
+                        <button class="panel-action" onclick="openEditCompanyTasksModal()">
+                            <i class="fas fa-edit"></i> 编辑
+                        </button>
+                        {% endif %}
+                    </div>
+                    <ul class="task-list" style="max-height: 400px; overflow-y: auto; padding-right: 8px;">
+                        {% for task in company_tasks %}
+                        <li class="task-item">
+                            <div class="task-header">
+                                <span class="task-name">{{ task.task_name }}</span>
+                                <span class="task-badge readonly">
+                                    <i class="fas fa-eye"></i> 只读
+                                </span>
+                                {% if task.priority == 'HIGH' %}
+                                <span style="color: #ef4444; font-size: 12px; margin-left: 8px;">
+                                    <i class="fas fa-exclamation-circle"></i> 高优先级
+                                </span>
+                                {% elif task.priority == 'MEDIUM' %}
+                                <span style="color: #f59e0b; font-size: 12px; margin-left: 8px;">
+                                    <i class="fas fa-minus-circle"></i> 中优先级
+                                </span>
+                                {% else %}
+                                <span style="color: #6b7280; font-size: 12px; margin-left: 8px;">
+                                    <i class="fas fa-info-circle"></i> 低优先级
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <span class="task-status {% if task.status == 'COMPLETED' %}completed{% elif task.status == 'IN_PROGRESS' %}in-progress{% else %}pending{% endif %}">
+                                    {% if task.status == 'COMPLETED' %}已完成
+                                    {% elif task.status == 'IN_PROGRESS' %}进行中
+                                    {% else %}待处理
+                                    {% endif %}
+                                </span>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar {% if task.status == 'COMPLETED' %}completed{% elif task.status == 'IN_PROGRESS' %}in-progress{% else %}pending{% endif %}"></div>
+                                </div>
+                            </div>
+                        </li>
+                        {% empty %}
+                        <li class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>暂无公司任务</p>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- 个人十大重要事项 -->
+                <div class="panel" style="margin-top: 24px;">
+                    <div class="panel-header">
+                        <h3 class="panel-title">个人十大重要事项</h3>
+                        <button class="panel-action" onclick="openEditPersonalTasksModal()">
+                            <i class="fas fa-edit"></i> 编辑
+                        </button>
+                    </div>
+                    <ul class="task-list" id="personalTasksList">
+                        {% for task in personal_tasks|slice:":5" %}
+                        <li class="task-item">
+                            <div class="task-header">
+                                <span class="task-name">{{ task.task_name }}</span>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    {% if task.priority == 'HIGH' %}
+                                    <span style="color: #ef4444; font-size: 12px;">
+                                        <i class="fas fa-exclamation-circle"></i> 高优先级
+                                    </span>
+                                    {% elif task.priority == 'MEDIUM' %}
+                                    <span style="color: #f59e0b; font-size: 12px;">
+                                        <i class="fas fa-minus-circle"></i> 中优先级
+                                    </span>
+                                    {% else %}
+                                    <span style="color: #6b7280; font-size: 12px;">
+                                        <i class="fas fa-info-circle"></i> 低优先级
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div>
+                                <span class="task-status {% if task.status == 'COMPLETED' %}completed{% elif task.status == 'IN_PROGRESS' %}in-progress{% else %}pending{% endif %}">
+                                    {% if task.status == 'COMPLETED' %}已完成
+                                    {% elif task.status == 'IN_PROGRESS' %}进行中
+                                    {% else %}待处理
+                                    {% endif %}
+                                </span>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar {% if task.status == 'COMPLETED' %}completed{% elif task.status == 'IN_PROGRESS' %}in-progress{% else %}pending{% endif %}"></div>
+                                </div>
+                            </div>
+                        </li>
+                        {% empty %}
+                        <li class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>暂无个人任务</p>
+                        </li>
+                        {% endfor %}
+                        {% if personal_tasks|length > 5 %}
+                        <li class="task-item" style="border: none; padding: 8px 16px; background: var(--bg-light);">
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">
+                                <i class="fas fa-chevron-down"></i> 更多任务 ({{ personal_tasks|length }} 个任务)
+                            </div>
+                            <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-white);">
+                                {% for task in personal_tasks|slice:"5:" %}
+                                <div class="task-item" style="padding: 12px; border-bottom: 1px solid var(--border-color); cursor: pointer;" onclick="window.location.href='/tasks/';">
+                                    <div class="task-header">
+                                        <span class="task-name" style="font-size: 14px;">{{ task.task_name }}</span>
+                                        <div style="display: flex; gap: 8px; align-items: center;">
+                                            {% if task.priority == 'HIGH' %}
+                                            <span style="color: #ef4444; font-size: 11px;">
+                                                <i class="fas fa-exclamation-circle"></i> 高优先级
+                                            </span>
+                                            {% elif task.priority == 'MEDIUM' %}
+                                            <span style="color: #f59e0b; font-size: 11px;">
+                                                <i class="fas fa-minus-circle"></i> 中优先级
+                                            </span>
+                                            {% else %}
+                                            <span style="color: #6b7280; font-size: 11px;">
+                                                <i class="fas fa-info-circle"></i> 低优先级
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div style="margin-top: 8px;">
+                                        <span class="task-status {% if task.status == 'COMPLETED' %}completed{% elif task.status == 'IN_PROGRESS' %}in-progress{% else %}pending{% endif %}" style="font-size: 11px;">
+                                            {% if task.status == 'COMPLETED' %}已完成
+                                            {% elif task.status == 'IN_PROGRESS' %}进行中
+                                            {% else %}待处理
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 右列 -->
+            <div>
+                <!-- 公司任务派发（属于自己的任务，所有员工都可见） -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">公司任务派发</h3>
+                    </div>
+                    <ul class="task-list" id="assignedTasksList">
+                        {% if assigned_tasks %}
+                            {% for task in assigned_tasks|slice:":5" %}
+                            <li class="task-item">
+                                <div class="task-header">
+                                    <span class="task-name">{{ task.task_name }}</span>
+                                </div>
+                                <div>
+                                    <span class="task-status {% if task.status == 'COMPLETED' %}completed{% elif task.status == 'IN_PROGRESS' %}in-progress{% else %}pending{% endif %}">
+                                        {% if task.status == 'COMPLETED' %}已完成
+                                        {% elif task.status == 'IN_PROGRESS' %}进行中
+                                        {% else %}待处理
+                                        {% endif %}
+                                    </span>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar {% if task.status == 'COMPLETED' %}completed{% elif task.status == 'IN_PROGRESS' %}in-progress{% else %}pending{% endif %}"></div>
+                                    </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+                            
+                        {% else %}
+                        <li class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>暂无派发任务</p>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <!-- 个人日志 -->
+                <div class="panel" style="margin-top: 24px;">
+                    <div class="panel-header">
+                        <h3 class="panel-title">个人日志</h3>
+                        <a href="/logs/" class="panel-action">
+                            <i class="fas fa-plus"></i> 写日志
+                        </a>
+                    </div>
+                    <ul class="log-list">
+                        {% for log in personal_logs %}
+                        <li class="log-item" style="cursor: pointer;" onclick="openEditLogModal({{ log.log_id }})">
+                            <div class="log-time">
+                                {% if log.log_time.date == today %}
+                                    今天 {{ log.log_time|date:"H:i" }}
+                                {% elif log.log_time.date == yesterday %}
+                                    昨天 {{ log.log_time|date:"H:i" }}
+                                {% else %}
+                                    {{ log.log_time|date:"Y-m-d H:i" }}
+                                {% endif %}
+                                <span style="margin-left: 8px; color: var(--primary-color); font-size: 12px;">
+                                    <i class="fas fa-edit"></i> 点击编辑
+                                </span>
+                            </div>
+                            <div class="log-content">{{ log.content }}</div>
+                        </li>
+                        {% empty %}
+                        <li class="empty-state">
+                            <i class="fas fa-book"></i>
+                            <p>暂无日志</p>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑日志弹窗 -->
+    <div id="editLogModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 24px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0;">编辑日志</h3>
+                <button onclick="closeEditLogModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+            <form id="editLogForm">
+                <input type="hidden" id="editLogId" name="log_id">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500;">日志内容</label>
+                    <textarea id="editLogContent" name="content" rows="4" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px;" required></textarea>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500;">日志类型</label>
+                    <select id="editLogType" name="log_type" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px;" required>
+                        <option value="WORK">工作</option>
+                        <option value="MEETING">会议</option>
+                        <option value="COMMUNICATION">沟通</option>
+                        <option value="DEVELOPMENT">开发</option>
+                        <option value="STUDY">学习</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500;">情绪标签</label>
+                    <select id="editEmotionTag" name="emotion_tag" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px;">
+                        <option value="">请选择情绪</option>
+                        <option value="ACTIVE">积极</option>
+                        <option value="FOCUSED">专注</option>
+                        <option value="SATISFIED">满意</option>
+                        <option value="TIRED">疲惫</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" onclick="closeEditLogModal()" style="padding: 10px 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white; cursor: pointer;">取消</button>
+                    <button type="submit" style="padding: 10px 20px; border: none; border-radius: 8px; background: var(--primary-color); color: white; cursor: pointer;">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 编辑个人十大重要事项弹窗（所有员工） -->
+    <div id="editPersonalTasksModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 24px; max-width: 900px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0;">编辑个人十大重要事项</h3>
+                <button onclick="closeEditPersonalTasksModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <input type="text" id="personalTaskSearchInput" placeholder="搜索任务..." style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px;" onkeyup="filterPersonalTasks()">
+            </div>
+            <div id="personalTaskList" style="max-height: 400px; overflow-y: auto;">
+                <p style="text-align: center; color: var(--text-secondary);">加载中...</p>
+            </div>
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <span>已选择: <span id="personalSelectedCount">0</span>/10</span>
+                </div>
+                <div id="personalSelectedTasks" style="min-height: 60px; padding: 12px; background: var(--bg-light); border-radius: 8px;">
+                    <p style="text-align: center; color: var(--text-secondary); font-size: 14px;">请选择任务</p>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
+                <button onclick="closeEditPersonalTasksModal()" style="padding: 10px 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white; cursor: pointer;">取消</button>
+                <button onclick="savePersonalTopTasks()" style="padding: 10px 20px; border: none; border-radius: 8px; background: var(--primary-color); color: white; cursor: pointer;">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑公司十大任务弹窗（仅管理员） -->
+    {% if has_admin_or_ceo_access %}
+    <div id="editCompanyTasksModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 24px; max-width: 900px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0;">编辑公司十大任务</h3>
+                <button onclick="closeEditCompanyTasksModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <input type="text" id="taskSearchInput" placeholder="搜索任务..." style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px;" onkeyup="filterTasks()">
+            </div>
+            <div id="taskList" style="max-height: 400px; overflow-y: auto;">
+                <p style="text-align: center; color: var(--text-secondary);">加载中...</p>
+            </div>
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <span>已选择: <span id="selectedCount">0</span>/10</span>
+                </div>
+                <div id="selectedTasks" style="min-height: 60px; padding: 12px; background: var(--bg-light); border-radius: 8px;">
+                    <p style="text-align: center; color: var(--text-secondary); font-size: 14px;">请选择任务</p>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
+                <button onclick="closeEditCompanyTasksModal()" style="padding: 10px 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white; cursor: pointer;">取消</button>
+                <button onclick="saveCompanyTopTasks()" style="padding: 10px 20px; border: none; border-radius: 8px; background: var(--primary-color); color: white; cursor: pointer;">保存</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 公告发布模态框 -->
+    {% if has_admin_or_ceo_access %}
+    <div id="announcementModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">发布新公告</span>
+                <span class="close" onclick="closeAnnouncementModal()"><i class="fas fa-times"></i></span>
+            </div>
+            <form id="announcementForm" onsubmit="submitAnnouncement(event)">
+                <div class="form-group">
+                    <label>标题</label>
+                    <input type="text" id="annTitle" class="form-control" required placeholder="请输入公告标题">
+                </div>
+                <div class="form-group">
+                    <label>内容</label>
+                    <textarea id="annContent" class="form-control" rows="5" required placeholder="请输入公告内容..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label>优先级</label>
+                            <select id="annPriority" class="form-control">
+                                <option value="NORMAL">普通</option>
+                                <option value="IMPORTANT">重要</option>
+                                <option value="URGENT">紧急</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <label style="margin-bottom: 12px;">设置</label>
+                        <div class="form-check">
+                            <input type="checkbox" id="annPinned">
+                            <label for="annPinned">置顶显示</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" id="annPush" checked>
+                            <label for="annPush">推送通知 (IM)</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeAnnouncementModal()">取消</button>
+                    <button type="submit" class="btn-submit">发布公告</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <script>
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('announcementModal');
+            if (event.target == modal) {
+                closeAnnouncementModal();
+            }
+        }
+        // 导航栏激活状态
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-links a');
+            
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // 编辑日志功能
+        let allTasks = [];
+        let selectedTaskIds = [];
+        let personalTasks = [];
+        let personalSelectedTaskIds = [];
+
+        function openEditLogModal(logId) {
+            fetch(`/logs/${logId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('editLogId').value = data.log_id;
+                    document.getElementById('editLogContent').value = data.content;
+                    document.getElementById('editLogType').value = data.log_type_raw;
+                    document.getElementById('editEmotionTag').value = data.emotion_tag_raw || '';
+                    document.getElementById('editLogModal').style.display = 'flex';
+                })
+                .catch(error => {
+                    alert('加载日志失败: ' + error);
+                });
+        }
+
+        function closeEditLogModal() {
+            document.getElementById('editLogModal').style.display = 'none';
+        }
+
+        document.getElementById('editLogForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const logId = document.getElementById('editLogId').value;
+            const formData = new FormData();
+            formData.append('content', document.getElementById('editLogContent').value);
+            formData.append('log_type', document.getElementById('editLogType').value);
+            formData.append('emotion_tag', document.getElementById('editEmotionTag').value);
+
+            fetch(`/logs/${logId}/update/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('日志更新成功');
+                    location.reload();
+                } else {
+                    alert('更新失败: ' + (data.error || data.message || '未知错误'));
+                }
+            })
+            .catch(error => {
+                alert('更新失败: ' + error);
+            });
+        });
+
+        // 编辑个人十大重要事项功能（所有员工）
+        function openEditPersonalTasksModal() {
+            document.getElementById('editPersonalTasksModal').style.display = 'flex';
+            loadPersonalTasks();
+        }
+
+        function closeEditPersonalTasksModal() {
+            document.getElementById('editPersonalTasksModal').style.display = 'none';
+            personalSelectedTaskIds = [];
+            updatePersonalSelectedTasks();
+        }
+
+        function loadPersonalTasks() {
+            fetch('/dashboard/get_personal_tasks/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        personalTasks = data.tasks;
+                        renderPersonalTaskList();
+                        // 加载当前已选中的任务
+                        {% if personal_tasks %}
+                        personalSelectedTaskIds = [
+                            {% for task in personal_tasks %}
+                            {{ task.task_id }}{% if not forloop.last %},{% endif %}
+                            {% endfor %}
+                        ];
+                        updatePersonalSelectedTasks();
+                        {% endif %}
+                    } else {
+                        alert('加载任务失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('加载任务失败: ' + error);
+                });
+        }
+
+        function renderPersonalTaskList(filterText = '') {
+            const taskListDiv = document.getElementById('personalTaskList');
+            const filteredTasks = personalTasks.filter(task => {
+                return task.task_name.toLowerCase().includes(filterText.toLowerCase()) ||
+                       (task.description && task.description.toLowerCase().includes(filterText.toLowerCase()));
+            });
+
+            if (filteredTasks.length === 0) {
+                taskListDiv.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">没有找到任务</p>';
+                return;
+            }
+
+            taskListDiv.innerHTML = filteredTasks.map(task => {
+                const isSelected = personalSelectedTaskIds.includes(task.task_id);
+                return `
+                    <div style="padding: 12px; border-bottom: 1px solid var(--border-color); cursor: pointer; ${isSelected ? 'background: rgba(102, 126, 234, 0.1);' : ''}" 
+                         onclick="togglePersonalTask(${task.task_id})">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="flex: 1;">
+                                <strong>${task.task_name}</strong>
+                                ${task.description ? '<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">' + task.description.substring(0, 50) + '</div>' : ''}
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                    ${task.assignee_name} | ${task.creation_time}
+                                </div>
+                            </div>
+                            ${isSelected ? '<i class="fas fa-check-circle" style="color: var(--primary-color);"></i>' : '<i class="far fa-circle" style="color: var(--text-secondary);"></i>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function togglePersonalTask(taskId) {
+            const index = personalSelectedTaskIds.indexOf(taskId);
+            if (index > -1) {
+                personalSelectedTaskIds.splice(index, 1);
+            } else {
+                if (personalSelectedTaskIds.length >= 10) {
+                    alert('最多只能选择10个任务');
+                    return;
+                }
+                personalSelectedTaskIds.push(taskId);
+            }
+            updatePersonalSelectedTasks();
+            renderPersonalTaskList(document.getElementById('personalTaskSearchInput').value);
+        }
+
+        function updatePersonalSelectedTasks() {
+            const selectedDiv = document.getElementById('personalSelectedTasks');
+            document.getElementById('personalSelectedCount').textContent = personalSelectedTaskIds.length;
+
+            if (personalSelectedTaskIds.length === 0) {
+                selectedDiv.innerHTML = '<p style="text-align: center; color: var(--text-secondary); font-size: 14px;">请选择任务</p>';
+                return;
+            }
+
+            const selectedTasks = personalTasks.filter(task => personalSelectedTaskIds.includes(task.task_id));
+            selectedDiv.innerHTML = selectedTasks.map((task, index) => `
+                <span style="display: inline-block; padding: 6px 12px; margin: 4px; background: var(--primary-color); color: white; border-radius: 20px; font-size: 12px;">
+                    ${task.task_name}
+                    <span style="margin-left: 8px; cursor: pointer;" onclick="togglePersonalTask(${task.task_id}); event.stopPropagation();">&times;</span>
+                </span>
+            `).join('');
+        }
+
+        function filterPersonalTasks() {
+            const filterText = document.getElementById('personalTaskSearchInput').value;
+            renderPersonalTaskList(filterText);
+        }
+
+        function savePersonalTopTasks() {
+            if (personalSelectedTaskIds.length === 0) {
+                alert('请至少选择一个任务');
+                return;
+            }
+
+            fetch('/dashboard/update_personal_top_tasks/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ task_ids: personalSelectedTaskIds })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('个人十大重要事项更新成功');
+                    location.reload();
+                } else {
+                    alert('更新失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('更新失败: ' + error);
+            });
+        }
+
+        // 编辑公司十大任务功能（仅管理员）
+        {% if has_admin_or_ceo_access %}
+        function openEditCompanyTasksModal() {
+            document.getElementById('editCompanyTasksModal').style.display = 'flex';
+            loadAllTasks();
+        }
+
+        function closeEditCompanyTasksModal() {
+            document.getElementById('editCompanyTasksModal').style.display = 'none';
+            selectedTaskIds = [];
+            updateSelectedTasks();
+        }
+
+        function loadAllTasks() {
+            fetch('/dashboard/get_all_tasks/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        allTasks = data.tasks;
+                        renderTaskList();
+                        // 加载当前已选中的任务
+                        {% if company_tasks %}
+                        selectedTaskIds = [
+                            {% for task in company_tasks %}
+                            {{ task.task_id }}{% if not forloop.last %},{% endif %}
+                            {% endfor %}
+                        ];
+                        updateSelectedTasks();
+                        {% endif %}
+                    } else {
+                        alert('加载任务失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('加载任务失败: ' + error);
+                });
+        }
+
+        function renderTaskList(filterText = '') {
+            const taskListDiv = document.getElementById('taskList');
+            const filteredTasks = allTasks.filter(task => {
+                return task.task_name.toLowerCase().includes(filterText.toLowerCase()) ||
+                       (task.description && task.description.toLowerCase().includes(filterText.toLowerCase()));
+            });
+
+            if (filteredTasks.length === 0) {
+                taskListDiv.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">没有找到任务</p>';
+                return;
+            }
+
+            taskListDiv.innerHTML = filteredTasks.map(task => {
+                const isSelected = selectedTaskIds.includes(task.task_id);
+                return `
+                    <div style="padding: 12px; border-bottom: 1px solid var(--border-color); cursor: pointer; ${isSelected ? 'background: rgba(102, 126, 234, 0.1);' : ''}" 
+                         onclick="toggleTask(${task.task_id})">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="flex: 1;">
+                                <strong>${task.task_name}</strong>
+                                ${task.description ? '<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">' + task.description.substring(0, 50) + '</div>' : ''}
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                    执行人: ${task.assignee_name} | ${task.creation_time}
+                                </div>
+                            </div>
+                            ${isSelected ? '<i class="fas fa-check-circle" style="color: var(--primary-color);"></i>' : '<i class="far fa-circle" style="color: var(--text-secondary);"></i>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleTask(taskId) {
+            const index = selectedTaskIds.indexOf(taskId);
+            if (index > -1) {
+                selectedTaskIds.splice(index, 1);
+            } else {
+                if (selectedTaskIds.length >= 10) {
+                    alert('最多只能选择10个任务');
+                    return;
+                }
+                selectedTaskIds.push(taskId);
+            }
+            updateSelectedTasks();
+            renderTaskList(document.getElementById('taskSearchInput').value);
+        }
+
+        function updateSelectedTasks() {
+            const selectedDiv = document.getElementById('selectedTasks');
+            document.getElementById('selectedCount').textContent = selectedTaskIds.length;
+
+            if (selectedTaskIds.length === 0) {
+                selectedDiv.innerHTML = '<p style="text-align: center; color: var(--text-secondary); font-size: 14px;">请选择任务</p>';
+                return;
+            }
+
+            const selectedTasks = allTasks.filter(task => selectedTaskIds.includes(task.task_id));
+            selectedDiv.innerHTML = selectedTasks.map((task, index) => `
+                <span style="display: inline-block; padding: 6px 12px; margin: 4px; background: var(--primary-color); color: white; border-radius: 20px; font-size: 12px;">
+                    ${task.task_name}
+                    <span style="margin-left: 8px; cursor: pointer;" onclick="toggleTask(${task.task_id}); event.stopPropagation();">&times;</span>
+                </span>
+            `).join('');
+        }
+
+        function filterTasks() {
+            const filterText = document.getElementById('taskSearchInput').value;
+            renderTaskList(filterText);
+        }
+
+        function saveCompanyTopTasks() {
+            if (selectedTaskIds.length === 0) {
+                alert('请至少选择一个任务');
+                return;
+            }
+
+            fetch('/dashboard/update_company_top_tasks/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ task_ids: selectedTaskIds })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('公司十大任务更新成功');
+                    location.reload();
+                } else {
+                    alert('更新失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('更新失败: ' + error);
+            });
+        }
+
+        {% endif %}
+
+        {% if has_admin_or_ceo_access %}
+        // 公告管理功能
+        function openAnnouncementModal() {
+            document.getElementById('announcementModal').style.display = 'flex';
+        }
+
+        function closeAnnouncementModal() {
+            document.getElementById('announcementModal').style.display = 'none';
+        }
+
+        async function submitAnnouncement(e) {
+            e.preventDefault();
+            
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = '发布中...';
+
+            const data = {
+                action: 'create',
+                title: document.getElementById('annTitle').value,
+                content: document.getElementById('annContent').value,
+                is_pinned: document.getElementById('annPinned').checked,
+                push_to_im: document.getElementById('annPush').checked,
+                priority: document.getElementById('annPriority').value
+            };
+
+            try {
+                const response = await fetch('/dashboard/api/announcement/ops/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('公告发布成功！');
+                    location.reload();
+                } else {
+                    alert('发布失败: ' + result.message);
+                }
+            } catch (error) {
+                alert('网络错误，请重试');
+                console.error(error);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        }
+        {% endif %}
+
+        // 获取CSRF Token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+{% endblock %}

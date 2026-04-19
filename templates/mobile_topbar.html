@@ -1,0 +1,142 @@
+<!-- FILE: mobile_topbar.html -->
+<style>
+.topbar-glass {
+  position: fixed; top: 0; left: 0; width: 100%;
+  height: calc(56px + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  z-index: 1030;
+  display: flex; align-items: center; justify-content: space-between;
+  padding-left: 16px; padding-right: 16px;
+  transition: all 0.3s ease;
+}
+
+/* 左侧用户信息 */
+.tb-user {
+  display: flex; align-items: center; text-decoration: none; color: #1F2937;
+  transition: opacity 0.2s;
+}
+.tb-user:active { opacity: 0.7; }
+
+.tb-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0056b3, #004494); /* 深蓝渐变 */
+  color: white; font-weight: 700; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  margin-right: 8px;
+  box-shadow: 0 2px 6px rgba(0, 86, 179, 0.3); /* 蓝色阴影 */
+}
+.tb-title { font-weight: 700; font-size: 16px; letter-spacing: -0.3px; color: #0056b3; }
+
+/* 右侧按钮区 */
+.tb-actions { display: flex; gap: 4px; align-items: center; }
+
+.tb-btn {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  color: #4B5563; text-decoration: none; border-radius: 50%;
+  transition: background 0.2s;
+  position: relative;
+}
+.tb-btn:active { background: rgba(0,0,0,0.05); }
+.tb-btn i { font-size: 18px; }
+
+/* 通知红点动画 */
+.tb-badge {
+  position: absolute; top: 8px; right: 8px;
+  width: 8px; height: 8px;
+  background: #EF4444;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  display: none;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+</style>
+
+<!-- 占位符，防止内容被遮挡 -->
+<div style="height: calc(56px + env(safe-area-inset-top));"></div>
+
+<div class="topbar-glass" id="mainTopbar">
+  <a href="/m/me/" class="tb-user">
+    <div class="tb-avatar">{{ request.session.current_employee_name|first|upper|default:"Me" }}</div>
+    <span class="tb-title">{{ page_title|default:"潘多拉日志" }}</span>
+  </a>
+  
+  <div class="tb-actions">
+    <!-- 定位诊断 -->
+    <button class="tb-btn" id="tbGeoBtn">
+      <i class="fas fa-map-marker-alt text-primary"></i>
+    </button>
+    
+    <!-- 通知 -->
+    <a href="/m/notifications/" class="tb-btn">
+      <i class="far fa-bell"></i>
+      <span id="tbNotiBadge" class="tb-badge"></span>
+    </a>
+  </div>
+</div>
+
+<script>
+(function(){
+  const badgeEl = document.getElementById('tbNotiBadge');
+  
+  async function refreshBadge(){
+    try{
+      const r = await fetch('/tasks/notifications/', { credentials:'include' });
+      const j = await r.json();
+      if(j && j.success && j.unread_count > 0){
+        badgeEl.style.display = 'block';
+      } else {
+        badgeEl.style.display = 'none';
+      }
+    }catch(_){}
+  }
+  
+  // 初始加载
+  refreshBadge();
+  
+  // SSE 实时监听 (如果后端支持)
+  try{
+    const es = new EventSource('/tasks/notifications/stream/');
+    es.onmessage = function(e){ 
+      try{ 
+        const d = JSON.parse(e.data); 
+        if(d && d.message && window.MobileUI) MobileUI.toast(d.message); 
+      }catch(_){} 
+      refreshBadge(); 
+    };
+    es.onerror = function(){ try{ es.close(); }catch(_){} };
+  }catch(_){}
+
+  // 定位诊断
+  const geoBtn = document.getElementById('tbGeoBtn');
+  if(geoBtn){
+    geoBtn.addEventListener('click', async () => {
+      if(window.MobileUI) MobileUI.toast('正在检测定位服务...');
+      
+      const info = [];
+      info.push(`HTTPS: ${window.isSecureContext ? '安全' : '不安全 (定位可能受限)'}`);
+      
+      try {
+        const pos = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+        });
+        info.push(`定位成功: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
+      } catch(e) {
+        info.push(`定位失败: ${e.message}`);
+      }
+      
+      if(window.MobileUI) MobileUI.toast(info.join(' | '));
+      else alert(info.join('\n'));
+    });
+  }
+})();
+</script>

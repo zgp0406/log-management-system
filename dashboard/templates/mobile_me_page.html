@@ -1,0 +1,706 @@
+<!-- FILE: mobile_me_page.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>我的</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<style>
+  :root {
+    --bg-body: #F2F2F7;
+    --primary-color: #007AFF;
+  }
+  
+  body { 
+    background: var(--bg-body); 
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; 
+    padding-bottom: 90px;
+  }
+
+  /* 顶部个人卡片 */
+  .profile-section {
+    position: relative;
+    background: #fff;
+    padding: 40px 20px 30px 20px;
+    margin-bottom: 24px;
+    border-radius: 0 0 24px 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    text-align: center;
+    overflow: hidden;
+  }
+  /* 氛围背景光 */
+  .profile-bg-glow {
+    position: absolute; top: -50%; left: 50%; transform: translateX(-50%);
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(0,122,255,0.2) 0%, rgba(255,255,255,0) 70%);
+    filter: blur(20px);
+    z-index: 0;
+  }
+  
+  .avatar-box {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
+    border-radius: 50%;
+    color: white;
+    font-size: 32px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 16px rgba(0,122,255,0.25);
+    position: relative; z-index: 1;
+    margin-bottom: 12px;
+    border: 3px solid #fff;
+  }
+  
+  .profile-name { font-size: 22px; font-weight: 800; color: #1C1C1E; margin-bottom: 4px; position: relative; z-index: 1; }
+  .profile-id { font-size: 14px; color: #8E8E93; position: relative; z-index: 1; margin-bottom: 8px; }
+  .profile-badge { 
+    background: #E5E5EA; color: #3A3A3C; font-size: 11px; padding: 4px 10px; 
+    border-radius: 12px; font-weight: 600; display: inline-block; position: relative; z-index: 1;
+  }
+
+  /* 分组列表容器 */
+  .settings-group {
+    background: #fff;
+    border-radius: 16px;
+    margin: 0 16px 20px 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  }
+  
+  /* 列表项 */
+  .settings-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px;
+    background: #fff;
+    border-bottom: 1px solid #F2F2F7;
+    color: #1C1C1E;
+    text-decoration: none; font-size: 16px;
+    transition: background 0.2s;
+    cursor: pointer; width: 100%; border-left:0; border-right:0; border-top:0; text-align: left;
+  }
+  .settings-item:last-child { border-bottom: none; }
+  .settings-item:active { background: #F2F2F7; }
+
+  /* 图标样式 */
+  .icon-box {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 15px;
+    margin-right: 14px; flex-shrink: 0;
+  }
+  .bg-blue { background: linear-gradient(135deg, #007AFF, #0062cc); }
+  .bg-green { background: linear-gradient(135deg, #34C759, #2db34a); }
+  .bg-orange { background: linear-gradient(135deg, #FF9500, #e08300); }
+  .bg-gray { background: #8E8E93; }
+  .bg-indigo { background: linear-gradient(135deg, #5856D6, #4845b8); }
+  .bg-red { background: linear-gradient(135deg, #FF3B30, #d63229); }
+
+  .item-content { display: flex; align-items: center; flex-grow: 1; font-weight: 500; }
+  .item-value { color: #8E8E93; font-size: 15px; margin-right: 8px; }
+  
+  /* 退出按钮 */
+  .btn-logout {
+    display: block; margin: 0 16px;
+    background: #fff; color: #FF3B30;
+    text-align: center; padding: 16px;
+    border-radius: 16px; font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  }
+  .btn-logout:active { background: #fff1f0; }
+
+  /* 动画 */
+  .fade-in-up { animation: fadeInUp 0.5s ease forwards; opacity: 0; transform: translateY(10px); }
+  @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+  /* Modal 美化 (复用) */
+  .modal-dialog-scrollable {
+    height: auto !important; max-height: 65vh !important;
+    margin-top: auto !important; margin-bottom: auto !important;
+  }
+  .modal-content {
+    border-radius: 24px; border: none; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-height: 65vh !important; overflow: hidden;
+  }
+  .modal-dialog { margin: 1.75rem; }
+  .modal-header { padding: 20px 24px 10px 24px; border-bottom: none; }
+  .modal-body { padding: 10px 24px 24px 24px; overflow-y: auto; scrollbar-width: none; }
+  .modal-body::-webkit-scrollbar { display: none; }
+  .modal-footer { border-top: none; padding: 0 24px 24px 24px; }
+  .modal-backdrop.show { opacity: 0.7; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+
+  .form-control { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; height: 50px; }
+  /* 下属日志列表样式 */
+  .log-card {
+    background: #fff; border: 1px solid #f1f5f9; border-radius: 16px; 
+    padding: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    transition: all 0.2s;
+  }
+  .log-card:active { transform: scale(0.98); background: #f8fafc; }
+   .log-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+   .log-type { 
+     font-size: 12px; font-weight: 700; color: #4f46e5; background: #eef2ff; 
+     padding: 4px 10px; border-radius: 20px; 
+   }
+   .log-time { font-size: 12px; color: #94a3b8; }
+   .log-content { font-size: 14px; color: #334155; line-height: 1.6; }
+   .log-tags { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+   .log-tag { font-size: 11px; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; }
+
+   /* AI 建议卡片样式 (亮色高级版 - 保持一致) */
+   .ai-box { 
+     position: relative;
+     background: #fff; 
+     border-radius: 20px; 
+     padding: 24px; 
+     margin-bottom: 16px; 
+     border: 1px solid rgba(0,0,0,0.03);
+     box-shadow: 0 8px 24px rgba(149, 157, 165, 0.08);
+     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+     overflow: hidden;
+     color: #334155;
+   }
+   .ai-box:last-child { margin-bottom: 0; }
+   
+   /* 动态渐变背景层 (亮色) */
+   .ai-box::before {
+       content: ''; position: absolute; inset: 0; z-index: 0;
+       background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(248,250,252,1) 100%);
+   }
+
+   /* 主题变体 */
+   .ai-box.theme-trend { 
+       border-top: 4px solid #6366F1;
+   }
+   .ai-box.theme-risk { 
+       border-top: 4px solid #F43F5E;
+   }
+   .ai-box.theme-action { 
+       border-top: 4px solid #10B981;
+   }
+
+   /* 背景装饰光晕 */
+   .ai-glow {
+       position: absolute; width: 150px; height: 150px; border-radius: 50%; filter: blur(50px); opacity: 0.15; z-index: 0;
+   }
+   .theme-trend .ai-glow { background: #6366F1; top: -60px; right: -60px; }
+   .theme-risk .ai-glow { background: #F43F5E; top: -60px; right: -60px; }
+   .theme-action .ai-glow { background: #10B981; top: -60px; right: -60px; }
+
+   .ai-watermark {
+       position: absolute; top: -10px; right: -10px; font-size: 80px; opacity: 0.05; transform: rotate(15deg); pointer-events: none;
+   }
+
+   .ai-title-row { 
+       font-size: 18px; font-weight: 800; margin-bottom: 16px; 
+       display: flex; align-items: center; gap: 10px;
+       position: relative; z-index: 2;
+   }
+   .theme-trend .ai-title-row { color: #4F46E5; }
+   .theme-risk .ai-title-row { color: #E11D48; }
+   .theme-action .ai-title-row { color: #059669; }
+
+   .ai-text { 
+       font-size: 15px; color: #475569; line-height: 1.7; 
+       position: relative; z-index: 2; font-weight: 500;
+   }
+   .ai-list { padding-left: 0; margin: 0; list-style: none; position: relative; z-index: 2; }
+   .ai-list li { 
+       font-size: 15px; color: #334155; margin-bottom: 12px; 
+       display: flex; align-items: start; line-height: 1.6;
+       background: #F8FAFC; padding: 12px 16px; border-radius: 12px;
+       border: 1px solid #F1F5F9;
+       transition: transform 0.2s;
+   }
+   .ai-list li:active { transform: scale(0.99); background: #F1F5F9; }
+   .ai-list li:last-child { margin-bottom: 0; }
+   
+   .ai-list-icon { 
+       color: #fff; margin-right: 12px; margin-top: 3px; font-size: 12px;
+       background: linear-gradient(135deg, #10B981, #34D399); 
+       width: 22px; height: 22px; 
+       display: flex; align-items: center; justify-content: center; border-radius: 6px; flex-shrink: 0;
+       box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+   }
+
+   .ai-advice-frame{
+     background: #F8FAFC;
+     border: 1px solid #E2E8F0;
+     border-radius: 20px;
+     padding: 14px;
+   }
+   #aiAdviceBox{ min-height: 120px; }
+   
+   /* 动画 */
+   .fade-up { animation: fadeInUp 0.5s ease forwards; opacity: 0; transform: translateY(10px); }
+   @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+ </style>
+ </head>
+<body>
+{% include 'mobile_ui.html' %}
+{% include 'mobile_topbar.html' %}
+
+<!-- 顶部个人信息 -->
+<div id="main-content">
+<div class="profile-section fade-in-up">
+  <div class="profile-bg-glow"></div>
+  <div class="avatar-box">
+    {{ employee_name|first|upper }}
+  </div>
+  <div class="profile-name">{{ employee_name }}</div>
+  <div class="profile-id">ID: {{ work_id }}</div>
+  <div class="profile-badge">{{ position|default:"职位未填写" }}</div>
+</div>
+
+<!-- 分组1: 基本信息 -->
+<div class="settings-group fade-in-up" style="animation-delay: 0.1s;">
+  <div class="settings-item">
+    <div class="item-content">
+      <div class="icon-box bg-blue"><i class="fas fa-envelope"></i></div>
+      <span>邮箱</span>
+    </div>
+    <div class="item-value">{{ email|default:"未填写" }}</div>
+  </div>
+  
+  <div class="settings-item">
+    <div class="item-content">
+      <div class="icon-box bg-green"><i class="fas fa-phone"></i></div>
+      <span>电话</span>
+    </div>
+    <div class="item-value">{{ phone_number|default:"未填写" }}</div>
+  </div>
+
+  <div class="settings-item">
+    <div class="item-content">
+      <div class="icon-box bg-gray"><i class="fas fa-building"></i></div>
+      <span>部门</span>
+    </div>
+    <div class="item-value">{{ department_name|default:"未分配" }}</div>
+  </div>
+  
+  <div class="settings-item">
+    <div class="item-content">
+      <div class="icon-box bg-gray"><i class="fas fa-calendar-alt"></i></div>
+      <span>入职</span>
+    </div>
+    <div class="item-value">{% if join_date %}{{ join_date|date:'Y/n/j' }}{% else %}--{% endif %}</div>
+  </div>
+</div>
+
+<!-- 分组2: 操作功能 -->
+<div class="settings-group fade-in-up" style="animation-delay: 0.2s;">
+  <button class="settings-item" onclick="openEditProfile()">
+    <div class="item-content">
+      <div class="icon-box bg-orange"><i class="fas fa-pen"></i></div>
+      <span>编辑资料</span>
+    </div>
+    <i class="fas fa-chevron-right text-muted small"></i>
+  </button>
+  
+  <button class="settings-item" onclick="openChangePassword()">
+    <div class="item-content">
+      <div class="icon-box bg-indigo"><i class="fas fa-lock"></i></div>
+      <span>修改密码</span>
+    </div>
+    <i class="fas fa-chevron-right text-muted small"></i>
+  </button>
+  
+  <button class="settings-item" onclick="openSubordinates()">
+    <div class="item-content">
+      <div class="icon-box bg-blue"><i class="fas fa-users"></i></div>
+      <span>下属员工</span>
+    </div>
+    <i class="fas fa-chevron-right text-muted small"></i>
+  </button>
+</div>
+
+<!-- 退出登录 -->
+<a class="btn-logout fade-in-up" style="animation-delay: 0.3s;" href="/login_app/logout/">退出登录</a>
+</div>
+
+<!-- 编辑资料 Modal -->
+<div class="modal fade" id="editProfile" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">编辑资料</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-4">
+          <label class="form-label">邮箱地址</label>
+          <div class="input-group">
+             <span class="input-group-text bg-light border-0" style="border-radius: 12px 0 0 12px;"><i class="fas fa-envelope text-muted"></i></span>
+             <input id="mEmail" class="form-control border-0 bg-light" value="{{ email }}" placeholder="Email" style="border-radius: 0 12px 12px 0;">
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">联系电话</label>
+          <div class="input-group">
+             <span class="input-group-text bg-light border-0" style="border-radius: 12px 0 0 12px;"><i class="fas fa-phone text-muted"></i></span>
+             <input id="mPhone" class="form-control border-0 bg-light" value="{{ phone_number }}" placeholder="Phone" style="border-radius: 0 12px 12px 0;">
+          </div>
+        </div>
+        <div class="d-grid mt-4"><button class="btn btn-primary rounded-pill py-3 fw-bold shadow-sm" onclick="submitProfile()">保存修改</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 修改密码 Modal -->
+<div class="modal fade" id="changePwd" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">修改密码</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-4">
+          <label class="form-label">当前密码</label>
+          <div class="input-group">
+             <span class="input-group-text bg-light border-0" style="border-radius: 12px 0 0 12px;"><i class="fas fa-lock text-muted"></i></span>
+             <input id="mOldPwd" type="password" class="form-control border-0 bg-light" placeholder="输入原密码" style="border-radius: 0 12px 12px 0;">
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">新密码</label>
+          <div class="input-group">
+             <span class="input-group-text bg-light border-0" style="border-radius: 12px 0 0 12px;"><i class="fas fa-key text-muted"></i></span>
+             <input id="mNewPwd" type="password" class="form-control border-0 bg-light" placeholder="设置新密码" style="border-radius: 0 12px 12px 0;">
+          </div>
+        </div>
+        <div class="d-grid mt-4"><button class="btn btn-primary rounded-pill py-3 fw-bold shadow-sm" onclick="submitPassword()">确认修改</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 下属员工列表 Modal (美化版) -->
+<div class="modal fade" id="subordinatesModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header pb-2">
+        <h5 class="modal-title fw-bold">我的下属</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-0 pt-0">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0" style="border-color: #f1f5f9;">
+            <thead class="bg-light">
+              <tr>
+                <th class="ps-4 border-0 text-muted fw-bold small text-uppercase py-3">姓名/工号</th>
+                <th class="border-0 text-muted fw-bold small text-uppercase py-3">职位</th>
+                <th class="pe-4 border-0 text-muted fw-bold small text-uppercase py-3 text-end">操作</th>
+              </tr>
+            </thead>
+            <tbody id="subordinatesBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 下属日志 Modal -->
+<div class="modal fade" id="logsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold" id="logsTitle">员工日志</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 pt-2">
+        <div class="mb-4">
+           <label class="form-label text-muted small mb-2">选择日期</label>
+           <div class="input-group shadow-sm" style="border-radius: 12px; overflow: hidden;">
+             <span class="input-group-text bg-white border-0"><i class="far fa-calendar-alt text-primary"></i></span>
+             <input type="date" id="logDate" class="form-control border-0 bg-white" onchange="loadSubLogs()" style="height:46px;">
+           </div>
+        </div>
+        <div id="logsList" class="d-flex flex-column gap-3"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI Modal -->
+<div class="modal fade" id="aiModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0 bg-gradient-dark text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding-top:20px; border-radius: 24px 24px 0 0;">
+        <h5 class="modal-title fw-bold d-flex align-items-center" id="aiTitle">
+          <span class="icon-box bg-warning text-dark me-2" style="width:32px;height:32px;border-radius:8px;font-size:16px;"><i class="fas fa-robot"></i></span>
+          AI 智能分析
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="ai-advice-frame">
+          <div id="aiAdviceBox"></div>
+        </div>
+        <div class="text-end mt-3 text-muted small"><i class="fas fa-magic me-1"></i>Generated by AI</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Views Modal -->
+<div class="modal fade" id="viewsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content border-0">
+      <div class="modal-header bg-white border-bottom">
+        <h5 class="modal-title fw-bold" id="viewsTitle">员工视图</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0 bg-light">
+        <iframe id="viewsFrame" src="" style="width:100%;height:100%;border:0;"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include 'mobile_nav.html' %}
+
+<script>
+MobileUI.fadeIn('#main-content');
+MobileUI.bindNavFade('body');
+const modalEdit = new bootstrap.Modal('#editProfile');
+const modalPwd = new bootstrap.Modal('#changePwd');
+
+function openEditProfile(){ modalEdit.show(); }
+function openChangePassword(){ modalPwd.show(); }
+
+async function submitProfile(){
+  const form = new URLSearchParams();
+  form.set('email', document.getElementById('mEmail').value.trim());
+  form.set('phone_number', document.getElementById('mPhone').value.trim());
+  try{
+    const r = await fetch('/employee/profile_update/', { method:'POST', body: form, credentials:'include' });
+    const j = await r.json();
+    if(j.success){ MobileUI.toast('资料已更新'); modalEdit.hide(); location.reload(); } else { MobileUI.toast(j.message||'保存失败'); }
+  }catch(e){ MobileUI.toast('网络错误'); }
+}
+
+async function submitPassword(){
+  const form = new URLSearchParams();
+  form.set('old_password', document.getElementById('mOldPwd').value);
+  form.set('new_password', document.getElementById('mNewPwd').value);
+  try{
+    const r = await fetch('/employee/change_password/', { method:'POST', body: form, credentials:'include' });
+    const j = await r.json();
+    if(j.success){ MobileUI.toast('密码已修改'); modalPwd.hide(); document.getElementById('mOldPwd').value=''; document.getElementById('mNewPwd').value=''; }
+    else { MobileUI.toast(j.message||'修改失败'); }
+  }catch(e){ MobileUI.toast('网络错误'); }
+}
+
+function openSubordinates(){
+  const body = document.getElementById('subordinatesBody');
+  body.innerHTML = '<tr><td colspan="5" class="text-center text-muted p-4">加载中...</td></tr>';
+  fetch(`/employee/subordinates/?work_id={{ work_id }}`)
+    .then(r=>r.json()).then(j=>{
+      body.innerHTML = '';
+      if(j.success && j.subordinates && j.subordinates.length){
+        j.subordinates.forEach(emp=>{
+          body.innerHTML += `<tr>
+            <td class="ps-4">
+               <div class="fw-bold text-dark" style="font-size:15px;">${emp.employee_name}</div>
+               <div class="small text-muted" style="font-size:12px;">ID: ${emp.work_id}</div>
+            </td>
+            <td><span class="badge bg-light text-dark border fw-normal px-2 py-1">${emp.position || '未填写'}</span></td>
+            <td class="pe-4 text-end">
+              <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-sm btn-white border shadow-sm rounded-circle p-2" data-action="log" data-emp-id="${emp.employee_id}" data-emp-name="${emp.employee_name}" title="日志"><i class="fas fa-list text-secondary"></i></button>
+                <button type="button" class="btn btn-sm btn-white border shadow-sm rounded-circle p-2" data-action="view" data-emp-id="${emp.employee_id}" data-emp-name="${emp.employee_name}" title="视图"><i class="fas fa-calendar text-primary"></i></button>
+                <button type="button" class="btn btn-sm btn-white border shadow-sm rounded-circle p-2" data-action="ai" data-emp-id="${emp.employee_id}" data-emp-name="${emp.employee_name}" title="AI分析"><i class="fas fa-robot text-dark"></i></button>
+              </div>
+            </td>
+          </tr>`;
+        });
+        body.onclick = function(ev){
+          const btn = ev.target.closest('button[data-action]');
+          if(!btn) return;
+          const id = parseInt(btn.getAttribute('data-emp-id'));
+          const name = btn.getAttribute('data-emp-name');
+          const act = btn.getAttribute('data-action');
+          if(act==='log') openSubLogs(id, name);
+          else if(act==='view') openSubViews(id, name);
+          else if(act==='ai') openSubAI(id, name);
+        };
+      }else{ body.innerHTML = '<tr><td colspan="3" class="text-center text-muted p-4">暂无下属</td></tr>'; }
+      new bootstrap.Modal(document.getElementById('subordinatesModal')).show();
+    }).catch(()=>{ body.innerHTML = '<tr><td colspan="3" class="text-center text-danger p-4">加载失败</td></tr>'; new bootstrap.Modal(document.getElementById('subordinatesModal')).show();});
+}
+
+let currentSubEmpId = null;
+function openSubLogs(empId, name){
+  currentSubEmpId = empId;
+  document.getElementById('logsTitle').textContent = name + ' 的日志';
+  document.getElementById('logDate').value = new Date().toISOString().split('T')[0];
+  loadSubLogs();
+  new bootstrap.Modal(document.getElementById('logsModal')).show();
+}
+function openSubViews(empId, name){
+  document.getElementById('viewsTitle').textContent = name + ' 的视图';
+  document.getElementById('viewsFrame').src = `/m/views/?employee_id=${empId}&embed=1`;
+  new bootstrap.Modal(document.getElementById('viewsModal')).show();
+}
+
+function loadSubLogs(){
+  if(!currentSubEmpId) return;
+  const date = document.getElementById('logDate').value;
+  const box = document.getElementById('logsList');
+  box.innerHTML = '<div class="text-center text-muted py-5"><div class="spinner-border text-secondary"></div></div>';
+  fetch(`/employee/logs/?employee_id=${currentSubEmpId}&date=${date}`)
+    .then(r=>r.json()).then(j=>{
+      if(j.success && j.logs && j.logs.length){
+        box.innerHTML = j.logs.map(l=>`
+        <div class="log-card">
+           <div class="log-meta">
+               <span class="log-type">${l.log_type}</span>
+               <span class="log-time"><i class="far fa-clock me-1"></i>${l.log_time.split(' ')[1]||l.log_time}</span>
+           </div>
+           <div class="log-content">${(l.content||'').replace(/</g,'&lt;')}</div>
+           ${l.tags&&l.tags.length?`<div class="log-tags">${l.tags.map(t=>'<span class="log-tag">#'+t+'</span>').join('')}</div>`:''}
+        </div>`).join('');
+      }else{ box.innerHTML = '<div class="text-center text-muted py-5"><i class="far fa-clipboard fa-2x mb-3 opacity-50"></i><br>该日暂无日志</div>'; }
+  }).catch(()=>{ box.innerHTML = '<div class="text-center text-danger py-3">加载失败</div>'; });
+}
+
+function escHtml(s){
+  return String(s ?? '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+function stripCodeFences(s){
+  return String(s ?? '').replace(/```(?:json)?/gi,'').replace(/```/g,'').trim();
+}
+
+function truncateText(s, maxLen){
+  const str = String(s ?? '').trim().replace(/\s+/g,' ');
+  if(!maxLen || str.length <= maxLen) return str;
+  return str.slice(0, Math.max(0, maxLen - 1)) + '…';
+}
+
+function extractBullets(text){
+  const cleaned = String(text ?? '')
+    .replace(/\r/g,'')
+    .replace(/\t/g,' ')
+    .replace(/\s+\n/g, '\n')
+    .trim();
+
+  const lines = cleaned.split('\n').map(s => s.trim()).filter(Boolean);
+  const fromLines = lines
+    .map(l => {
+      const m = l.match(/^(?:[-*•]|(?:\(?\d+\)?[.)、])|[一二三四五六七八九十]+[、.])\s*(.+)$/);
+      return (m ? m[1] : l).trim();
+    })
+    .filter(Boolean);
+
+  const manyLines = fromLines.filter(x => x.length >= 6);
+  if(manyLines.length >= 2) return manyLines;
+
+  return cleaned
+    .replace(/\n+/g,' ')
+    .split(/[。！？!?；;]\s*/g)
+    .map(s => s.trim())
+    .filter(s => s.length >= 8);
+}
+
+function buildAdviceHtmlFromRaw(raw){
+  const rawText = stripCodeFences(raw);
+  let parsed = null;
+  try { parsed = JSON.parse(rawText); } catch(e) {}
+
+  if(parsed && typeof parsed === 'object'){
+    const trend = parsed.trend ? truncateText(parsed.trend, 120) : '';
+    const risk = parsed.risk ? truncateText(parsed.risk, 120) : '';
+    let actions = parsed.actions;
+    if(typeof actions === 'string') actions = extractBullets(actions);
+    if(!Array.isArray(actions)) actions = [];
+    actions = actions.map(a => truncateText(a, 80)).filter(Boolean).slice(0, 6);
+
+    if(trend || risk || actions.length){
+      return `
+        ${trend ? `
+          <div class="ai-box theme-trend fade-up" style="animation-delay: 0.05s;">
+            <span class="ai-glow"></span>
+            <i class="fas fa-chart-line ai-watermark text-primary"></i>
+            <div class="ai-title-row"><i class="fas fa-chart-line"></i>趋势解读</div>
+            <div class="ai-text">${escHtml(trend)}</div>
+          </div>
+        ` : ''}
+        ${risk ? `
+          <div class="ai-box theme-risk fade-up" style="animation-delay: 0.12s;">
+            <span class="ai-glow"></span>
+            <i class="fas fa-exclamation-triangle ai-watermark text-danger"></i>
+            <div class="ai-title-row"><i class="fas fa-exclamation-triangle"></i>风险预警</div>
+            <div class="ai-text">${escHtml(risk)}</div>
+          </div>
+        ` : ''}
+        <div class="ai-box theme-action fade-up" style="animation-delay: 0.19s;">
+          <span class="ai-glow"></span>
+          <i class="fas fa-clipboard-check ai-watermark text-success"></i>
+          <div class="ai-title-row"><i class="fas fa-check-circle"></i>行动建议</div>
+          ${actions.length ? `
+            <ul class="ai-list">
+              ${actions.map(a => `<li><div class="ai-list-icon"><i class="fas fa-check"></i></div><div>${escHtml(a)}</div></li>`).join('')}
+            </ul>
+          ` : `<div class="ai-text">暂无可用建议</div>`}
+        </div>
+      `;
+    }
+  }
+
+  const bullets = extractBullets(rawText).slice(0, 6).map(s => truncateText(s, 90));
+  if(bullets.length){
+    return `
+      <div class="ai-box theme-action fade-up" style="animation-delay: 0.06s;">
+        <span class="ai-glow"></span>
+        <i class="fas fa-lightbulb ai-watermark text-success"></i>
+        <div class="ai-title-row"><i class="fas fa-lightbulb"></i>建议要点</div>
+        <ul class="ai-list">
+          ${bullets.map(a => `<li><div class="ai-list-icon"><i class="fas fa-check"></i></div><div>${escHtml(a)}</div></li>`).join('')}
+        </ul>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="ai-box theme-action fade-up" style="animation-delay: 0.06s;">
+      <span class="ai-glow"></span>
+      <i class="fas fa-robot ai-watermark text-success"></i>
+      <div class="ai-title-row"><i class="fas fa-robot"></i>AI 建议</div>
+      <div class="ai-text">${escHtml(rawText || '暂无AI分析数据')}</div>
+    </div>
+  `;
+}
+
+async function openSubAI(empId, name){
+  document.getElementById('aiTitle').innerHTML = `<i class="fas fa-robot me-2"></i> ${name} AI 分析`;
+  const box = document.getElementById('aiAdviceBox');
+  box.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-dark"></div></div>';
+  try{
+    const r = await fetch(`/ai/api/analysis/${empId}/`, { credentials:'include' });
+    const j = await r.json();
+    if(j && j.success && j.exists){
+      const raw = j.ai_advice || '';
+      box.innerHTML = buildAdviceHtmlFromRaw(raw);
+    }else if(j && j.success && !j.exists){
+      box.innerHTML = buildAdviceHtmlFromRaw('');
+    }else{
+      box.innerHTML = buildAdviceHtmlFromRaw(j && j.message ? String(j.message) : '网络错误');
+    }
+  }catch(e){ box.innerHTML = buildAdviceHtmlFromRaw('网络错误'); }
+  new bootstrap.Modal(document.getElementById('aiModal')).show();
+}
+</script>
+</body>
+</html>

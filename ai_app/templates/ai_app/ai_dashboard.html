@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block title %}AI 分析与仪表盘{% endblock %}
+
+{% block content %}
+<div style="padding: 24px; max-width: 1200px; margin: 0 auto;">
+  <h2 style="margin-bottom: 16px;">AI 数据仪表盘</h2>
+  <p style="color: var(--text-secondary); margin-bottom: 12px;">范围：
+    <select id="scopeSelect" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:8px;">
+      <option value="personal">个人</option>
+      <option value="department">部门</option>
+    </select>
+    <select id="deptSelect" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:8px; display:none; margin-left:8px;"></select>
+    <button id="refreshPortrait" style="margin-left:8px; padding:6px 12px; background: var(--primary-color); color:#fff; border:none; border-radius:8px; cursor:pointer;">刷新画像</button>
+  </p>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div style="background: white; border-radius: 12px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+      <h3 style="margin-bottom: 12px;">近30天任务状态</h3>
+      <canvas id="taskStatusChart" height="160"></canvas>
+    </div>
+    <div style="background: white; border-radius: 12px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+      <h3 style="margin-bottom: 12px;">近30天日志类型</h3>
+      <canvas id="logTypeChart" height="160"></canvas>
+    </div>
+    <div style="background: white; border-radius: 12px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+      <h3 style="margin-bottom: 12px;">近30天情绪分布</h3>
+      <canvas id="emotionChart" height="160"></canvas>
+    </div>
+    <div style="background: white; border-radius: 12px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+      <h3 style="margin-bottom: 12px;">部门任务概况</h3>
+      <canvas id="deptTaskChart" height="160"></canvas>
+    </div>
+  </div>
+
+  <div style="margin-top: 24px; background: white; border-radius: 12px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+    <h3 id="adviceTitle" style="margin-bottom: 12px;">AI 建议</h3>
+    <div id="aiAdvice" style="white-space: pre-wrap; color: var(--text-primary);"></div>
+  </div>
+
+  
+
+
+  <div style="margin-top: 24px; background: white; border-radius: 12px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+    <h3 style="margin-bottom: 12px;">智能周报</h3>
+    <div style="margin-bottom: 12px;">
+      <button id="genWeeklyReportBtn" style="padding:6px 12px; background: var(--primary-color); color:#fff; border:none; border-radius:8px; cursor:pointer;">生成预览</button>
+      <button id="pushWeeklyReportBtn" style="margin-left:8px; padding:6px 12px; background: #28a745; color:#fff; border:none; border-radius:8px; cursor:pointer;">推送到 IM</button>
+      <span id="weeklyReportStatus" style="margin-left: 12px; color: #666; font-size: 0.9em;"></span>
+    </div>
+    <textarea id="weeklyReportContent" rows="15" style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-family: monospace; line-height: 1.5; resize: vertical;" placeholder="点击“生成预览”获取周报内容，支持手动编辑后推送..."></textarea>
+  </div>
+
+  <div id="mbtiSelfCard" style="margin-top: 24px; background: white; border-radius: 12px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+    <h3 style="margin-bottom: 12px;">MBTI 自选分析</h3>
+    <div>
+      <select id="mbtiSelect" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:8px; max-width: 160px;">
+        <option>INTJ</option><option>INTP</option><option>ENTJ</option><option>ENTP</option>
+        <option>INFJ</option><option>INFP</option><option>ENFJ</option><option>ENFP</option>
+        <option>ISTJ</option><option>ISFJ</option><option>ESTJ</option><option>ESFJ</option>
+        <option>ISTP</option><option>ISFP</option><option>ESTP</option><option>ESFP</option>
+      </select>
+      <button id="mbtiGenBtn" style="margin-left:8px; padding:6px 12px; background: var(--primary-color); color:#fff; border:none; border-radius:8px; cursor:pointer;">生成分析</button>
+    </div>
+    <div id="mbtiSelfAdvice" style="margin-top: 8px; white-space: pre-wrap; color: var(--text-primary);"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  async function fetchJSON(url, options={}){
+    try {
+      const r = await fetch(url, Object.assign({ credentials:'include' }, options));
+      if (!r.ok) {
+        return { success:false, message:'网络错误，请稍后重试', status:r.status };
+      }
+      const text = await r.text();
+      try { 
+        return JSON.parse(text); 
+      } catch(e) { 
+        return { success:false, message:'网络错误，请稍后重试', status:r.status, raw:text }; 
+      }
+    } catch(e) {
+      return { success:false, message:'网络错误，请稍后重试' };
+    }
+  }
+
+  function safeRenderPie(canvasId, labels, data, colors) {
+    try {
+      if (!window.Chart) return;
+      const el = document.getElementById(canvasId);
+      if (!el) return;
+      const ctx = el.getContext('2d');
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data, backgroundColor: colors }] },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+      });
+    } catch (e) {
+      console.error('图表渲染失败', e);
+    }
+  }
+
+  function loadDashboard(refresh) {
+    return new Promise(async (resolve) => {
+      const scope = document.getElementById('scopeSelect').value;
+      const deptId = document.getElementById('deptSelect').value;
+      const qBase = scope==='department' && deptId ? `?scope=department&department_id=${encodeURIComponent(deptId)}` : '';
+      const q = refresh ? (qBase ? qBase + '&refresh=1' : '?refresh=1') : qBase;
+      const resp = await fetchJSON('/ai/api/dashboard/'+q);
+      if (!resp || !resp.success) {
+        document.getElementById('aiAdvice').textContent = (resp && resp.message) ? resp.message : '网络错误，请稍后重试';
+        resolve();
+        return;
+      }
+      const d = resp.data || {};
+      const title = scope==='department' ? '部门 AI 建议' : 'AI 建议';
+      document.getElementById('adviceTitle').textContent = title;
+      const ts = d.task_stats || {};
+      safeRenderPie('taskStatusChart', ['已完成','进行中','待处理'], [ts.completed||0, ts.in_progress||0, ts.pending||0], ['#10b981','#3b82f6','#f59e0b']);
+      const ltLabels = Object.keys(d.log_types || {});
+      const ltData = ltLabels.map(k => d.log_types[k]);
+      safeRenderPie('logTypeChart', ltLabels, ltData, ['#667eea','#764ba2','#3b82f6','#10b981','#f59e0b']);
+      const emoLabels = Object.keys(d.emotions || {});
+      const emoData = emoLabels.map(k => d.emotions[k]);
+      safeRenderPie('emotionChart', emoLabels, emoData, ['#ef4444','#10b981','#3b82f6','#f59e0b']);
+      const dept = d.dept_task_stats || {};
+      safeRenderPie('deptTaskChart', ['已完成','进行中','待处理'], [dept.completed||0, dept.in_progress||0, dept.pending||0], ['#10b981','#3b82f6','#f59e0b']);
+      const aiAdvice = d.ai_advice;
+      if (aiAdvice === null || aiAdvice === undefined || aiAdvice === '') {
+        document.getElementById('aiAdvice').textContent = '暂无AI建议';
+      } else if (aiAdvice.startsWith('网络错误') || aiAdvice.startsWith('AI建议生成失败')) {
+        document.getElementById('aiAdvice').textContent = 'AI建议生成中，请稍候...';
+      } else {
+        document.getElementById('aiAdvice').textContent = aiAdvice;
+      }
+      const adviceElement = document.getElementById('aiAdvice');
+      if (!adviceElement.textContent.trim()) {
+        adviceElement.textContent = '网络错误，请稍后重试';
+      }
+      resolve();
+    });
+  }
+
+  
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadDashboard();
+    const scopeSel = document.getElementById('scopeSelect');
+    const deptSel = document.getElementById('deptSelect');
+    
+    document.getElementById('refreshPortrait').addEventListener('click', function(){
+      Promise.all([
+        loadDashboard(true),
+        Promise.resolve()
+      ]).then(() => {
+        // 不再自动刷新页面，让用户看到实时更新的数据
+        console.log('AI建议刷新完成，数据已更新');
+      });
+    });
+    scopeSel.addEventListener('change', ()=>{
+      if(scopeSel.value==='department'){
+        deptSel.style.display='inline-block';
+        if(!deptSel.options.length){
+          fetchJSON('/ai/api/departments/').then(res=>{
+            if(res && res.success){
+              deptSel.innerHTML = (res.departments||[]).map(d=>`<option value="${d.department_id}">${d.department_name}</option>`).join('');
+            }
+            loadDashboard();
+          });
+        }else{ loadDashboard(); }
+      }else{ deptSel.style.display='none'; loadDashboard(); }
+    });
+    deptSel.addEventListener('change', loadDashboard);
+
+    document.getElementById('mbtiGenBtn').addEventListener('click', async function(){
+      const mbti = document.getElementById('mbtiSelect').value;
+      const scope = document.getElementById('scopeSelect').value;
+      const res = await fetchJSON('/ai/api/mbti/', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ mbti, scope }) });
+      if(res && res.success){ document.getElementById('mbtiSelfAdvice').textContent = res.advice || ''; }
+      else { document.getElementById('mbtiSelfAdvice').textContent = (res && res.message) ? res.message : '生成失败'; }
+    });
+
+    // 智能周报逻辑
+    const genReportBtn = document.getElementById('genWeeklyReportBtn');
+    const pushReportBtn = document.getElementById('pushWeeklyReportBtn');
+    const reportContent = document.getElementById('weeklyReportContent');
+    const reportStatus = document.getElementById('weeklyReportStatus');
+
+    async function handleReport(action) {
+      const isPush = action === 'push';
+      const btn = isPush ? pushReportBtn : genReportBtn;
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = isPush ? '推送中...' : '生成中...';
+      reportStatus.textContent = '';
+      
+      try {
+        const body = { action };
+        if (isPush) {
+          body.content = reportContent.value;
+        }
+        
+        const r = await fetch('/ai/api/weekly_report/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await r.json();
+        
+        if (data.success) {
+          if (!isPush) {
+             reportContent.value = data.report;
+             reportStatus.textContent = '已生成，您可以编辑后推送';
+             reportStatus.style.color = 'green';
+          } else {
+             reportStatus.textContent = '已成功推送到 IM';
+             reportStatus.style.color = 'green';
+          }
+        } else {
+          reportStatus.textContent = '失败: ' + data.message;
+          reportStatus.style.color = 'red';
+        }
+      } catch (e) {
+        reportStatus.textContent = '网络错误';
+        reportStatus.style.color = 'red';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+
+    if(genReportBtn) genReportBtn.onclick = () => handleReport('generate');
+    if(pushReportBtn) pushReportBtn.onclick = () => handleReport('push');
+  });
+</script>
+{% endblock %}

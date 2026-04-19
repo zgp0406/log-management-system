@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>软件需求规格说明书</title>
+  <style>
+    body { font-family: 'Microsoft YaHei', Arial, sans-serif; font-size: 12pt; line-height: 1.6; color: #000; }
+    h1 { font-size: 20pt; text-align: center; margin-top: 0; }
+    h2 { font-size: 16pt; margin: 20px 0 10px; }
+    ul { margin: 8px 0 8px 24px; }
+    li { margin: 4px 0; }
+    .section { page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+  <h1>软件需求规格说明书</h1>
+
+  <div class="section">
+    <h2>一、文档目的</h2>
+    <ul>
+      <li>明确 Pandora 日志管理系统 的产品范围、功能与约束</li>
+      <li>为设计、开发、测试、运维提供统一的需求依据，约定接口与验收标准</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>二、范围与目标</h2>
+    <ul>
+      <li>范围：任务管理、工作日志、信息面板、员工与角色管理、AI 分析、移动端（PWA）访问</li>
+      <li>目标：支持员工自助操作与管理员/CEO全局视图，保障移动端与离线体验</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>三、术语与角色</h2>
+    <ul>
+      <li>术语：任务（Task）、子任务（SubTask）、日志（LogEntry）、标签（Tag）、管理员（Admin）、CEO、Boss</li>
+      <li>角色：员工、管理员、CEO、Boss（同时具备管理员与CEO权限）</li>
+      <li>权限判断参考：pandora/utils.py 中的 check_admin_role、check_ceo_role、check_boss_role、has_admin_or_ceo_access</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>四、用户场景</h2>
+    <ul>
+      <li>员工登录后查看与处理任务、记录日志、上传图片（含移动端）</li>
+      <li>管理员查看全员任务与日志，分配与编辑任务，设置公司十大任务</li>
+      <li>CEO/Boss 查看全公司视图，跨员工/部门查询与分析</li>
+      <li>移动端通过 PWA 快速访问并具备基本离线缓存</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>五、系统功能需求</h2>
+    <h3>5.1 登录认证</h3>
+    <ul>
+      <li>登录页与登录接口设置会话键 current_employee_*（login_app/views.py）</li>
+      <li>注销清空会话；未登录访问受限接口返回错误或重定向登录页</li>
+    </ul>
+    <h3>5.2 任务管理</h3>
+    <ul>
+      <li>列表查询：支持 mine/all、搜索、日期范围、状态排序（task_app/api_views.py）</li>
+      <li>接取任务：仅执行人可接取，幂等处理（IN_PROGRESS）（task_app/api_views.py）</li>
+      <li>完成任务：仅执行人；自动完成未完成子任务并写日志，通知创建人（task_app/api_views.py）</li>
+      <li>创建任务：校验必填、执行人、预计时长与截止时间（task_app/api_views.py）</li>
+      <li>更新/删除：管理员/CEO或创建者；更换执行人触发通知（task_app/api_views.py）</li>
+      <li>管理命令：每日到期与逾期提醒（task_app/management/commands）</li>
+    </ul>
+    <h3>5.3 日志管理</h3>
+    <ul>
+      <li>列表查询：按权限、日期、搜索条件返回（log_app/api_views.py）</li>
+      <li>标签列表：供创建/编辑选择（log_app/api_views.py）</li>
+      <li>创建/更新/删除：本人或管理员/CEO；支持图片替换/移除与位置更新、覆盖标签（log_app/api_views.py）</li>
+      <li>网页端视图：创建表单、列表、详情、更新、删除（log_app/views.py）</li>
+      <li>移动端模板：mobile_log_page.html</li>
+    </ul>
+    <h3>5.4 信息面板与员工</h3>
+    <ul>
+      <li>Dashboard 首页：今日任务统计、公司十大、个人十大、派发任务、个人日志、导航（dashboard/views.py）</li>
+      <li>员工列表/搜索、Boss 列表、部门字典（dashboard/views.py）</li>
+      <li>员工增删改与详情获取（dashboard/views.py）</li>
+      <li>上级角色获取与部门员工选择（dashboard/views.py）</li>
+      <li>日历视图 API：日/周/月统计与任务格局（dashboard/views.py）</li>
+    </ul>
+    <h3>5.5 AI 看板与 MBTI</h3>
+    <ul>
+      <li>AI 看板：个人/部门范围，近30天任务与日志统计、建议生成与持久化缓存（ai_app/api_views.py）</li>
+      <li>员工 AI 分析档案获取（ai_app/api_views.py）</li>
+      <li>MBTI 建议生成与自动推断（ai_app/api_views.py）</li>
+      <li>部门列表：管理员获取全部，自身获取所属（ai_app/api_views.py）</li>
+    </ul>
+    <h3>5.6 移动端与 PWA</h3>
+    <ul>
+      <li>UA 判定移动端入口跳转映射（pandora/mobile_redirect_middleware.py）</li>
+      <li>动态 manifest 路由（pandora/urls.py）</li>
+      <li>Service Worker 离线缓存与网络优先（static/js/sw.js）</li>
+    </ul>
+    <h3>5.7 地理位置与三方代理</h3>
+    <ul>
+      <li>高德 IP 定位与逆地理代理（log_app/api_views.py）</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>六、数据需求与模型</h2>
+    <ul>
+      <li>统一模型集中在 pandora/models.py，部分表 managed=False 依赖既有库</li>
+      <li>关键模型：Employee、Role、EmployeeRole、Task、SubTask、TaskNotificationMessage、LogEntry、LogTag、EntryTagLink、PersonalTopTaskConfig、CompanyTopTaskConfig、AiAnalysisProfile、AiDeptAnalysisProfile</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>七、接口规范</h2>
+    <ul>
+      <li>OpenAPI3 文档：api.yaml，使用 cookieAuth 会话Cookie</li>
+      <li>统一返回结构：{"success": True/False, ...}；失败返回 message 或错误码</li>
+      <li>主要端点：登录、Dashboard、任务（列表/接取/完成/创建/更新/删除）、日志（列表/标签/创建/更新/删除）、AI（看板/MBTI）</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>八、权限与访问控制</h2>
+    <ul>
+      <li>员工：访问自身数据；管理员/CEO：访问所有数据；Boss：具备最高权限与视图切换</li>
+      <li>未登录访问受限；任务与日志编辑/删除均进行权限校验</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>九、非功能性需求</h2>
+    <ul>
+      <li>性能：列表接口限制或分页、select_related 降低 N+1</li>
+      <li>可靠性：SSE 推送支持断线重连；每日提醒命令</li>
+      <li>可用性：移动端与 PWA 缓存关键入口；Dashboard 提供关键指标</li>
+      <li>安全：密钥与凭据通过环境变量；密码应采用加密哈希；受控 CORS/CSRF</li>
+      <li>国际化：LANGUAGE_CODE=zh-hans</li>
+      <li>兼容性：浏览器支持 PWA 与 SSE，移动端 UA 跳转</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>十、约束条件</h2>
+    <ul>
+      <li>数据库：MySQL（mysql.connector.django）</li>
+      <li>部分数据表 managed=False，要求生产库已有表结构</li>
+      <li>允许域包含 ngrok 域用于移动端调试</li>
+      <li>文件上传保存到 MEDIA_ROOT/subdir 并返回相对路径</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>十一、配置与部署</h2>
+    <ul>
+      <li>配置建议通过环境变量：AI_API_KEY、AI_MODEL、AI_PROVIDER、AMAP_WEB_KEY 等</li>
+      <li>生产部署需关闭 DEBUG，设置 ALLOWED_HOSTS、HTTPS 代理头、安全 Cookie</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>十二、验收标准</h2>
+    <ul>
+      <li>任务：创建/接取/完成/编辑/删除完整，状态与时间联动正确，通知生成</li>
+      <li>日志：创建/更新/删除完整，标签与位置、图片处理正确，列表过滤有效</li>
+      <li>Dashboard：公司/个人十大任务配置与统计呈现，更新接口持久化</li>
+      <li>AI 看板：配置正常时生成并持久化，失败时缓存或降级建议</li>
+      <li>移动端与 PWA：入口跳转与缓存可用</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>十三、风险与改进建议</h2>
+    <ul>
+      <li>明文密码校验存在安全隐患，需迁移为加密哈希并加强策略</li>
+      <li>managed=False 模型依赖外部库结构，需确保迁移一致性与版本管控</li>
+      <li>环境变量回退到硬编码密钥有泄露风险，建议移除默认值</li>
+      <li>统一分页与查询参数校验、权限审计日志与操作留痕</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>十四、测试策略</h2>
+    <ul>
+      <li>单元测试：pytest 覆盖任务模型、任务视图、任务 API、日志视图权限等</li>
+      <li>集成测试：结合 Postman 集合；验证未登录受限、权限判定、上传与媒体路径生成、SSE 稳定性</li>
+    </ul>
+  </div>
+
+</body>
+</html>
+

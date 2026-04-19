@@ -1,0 +1,1042 @@
+openapi: 3.0.3
+info:
+  title: Pandora日志管理系统 API
+  description: 与Django项目一致的会话认证API接口文档
+  version: 1.0.0
+servers:
+  - url: http://127.0.0.1:8000
+    description: 本地开发环境(127.0.0.1)
+  - url: http://localhost:8000
+    description: 本地开发环境(localhost)
+tags:
+  - name: 登录认证
+    description: 会话登录与注销
+  - name: 信息面板
+    description: 仪表盘与员工查询
+  - name: 任务
+    description: 任务列表与任务操作
+  - name: 日志
+    description: 工作日志与标签
+  - name: AI分析
+    description: AI看板与MBTI分析
+  - name: 通用
+    description: 第三方代理与公共数据
+paths:
+  /login_app/login/:
+    post:
+      tags: [登录认证]
+      summary: 员工登录
+      operationId: Login
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [work_id, password]
+              properties:
+                work_id:
+                  type: string
+                  example: EMP001
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: 登录结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasicResult'
+              example:
+                success: true
+                message: 登录成功
+  /login_app/logout/:
+    get:
+      tags: [登录认证]
+      summary: 注销并跳转登录页
+      responses:
+        '302':
+          description: 重定向到登录页
+  /dashboard/api/:
+    get:
+      tags: [信息面板]
+      summary: 仪表盘数据
+      operationId: DashboardGet
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardResponse'
+              example:
+                success: true
+                data:
+                  current_employee_id: 1
+                  task_stats:
+                    today_total: 0
+                    completed: 0
+                    in_progress: 0
+                    pending: 0
+        '401':
+          description: 未登录
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasicResult'
+  /dashboard/api/employees/:
+    get:
+      tags: [信息面板]
+      summary: 管理员/CEO获取员工列表
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: query
+          in: query
+          schema:
+            type: string
+          description: 姓名或工号模糊搜索
+        - name: department_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  employees:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EmployeeBrief'
+  /tasks/api/:
+    get:
+      tags: [任务]
+      summary: 任务列表（创建的/接收的）
+      operationId: TaskList
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: view_mode
+          in: query
+          schema:
+            type: string
+            enum: [mine, all]
+          description: 对于Boss/管理员，all显示全部任务
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: 按名称/描述/项目来源/人名搜索
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  tasks_created:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TaskItem'
+                  tasks_received:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TaskItem'
+                  has_admin_access:
+                    type: boolean
+                  is_boss:
+                    type: boolean
+                  view_mode:
+                    type: string
+              example:
+                success: true
+                tasks_created: []
+                tasks_received: []
+                has_admin_access: false
+                is_boss: false
+                view_mode: mine
+        '401':
+          description: 未登录
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasicResult'
+  /tasks/api/{task_id}/take/:
+    post:
+      tags: [任务]
+      summary: 接取任务（仅执行人）
+      operationId: TaskTake
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResult'
+              example:
+                success: true
+                status: IN_PROGRESS
+        '401':
+          description: 未登录
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasicResult'
+  /tasks/api/{task_id}/complete/:
+    post:
+      tags: [任务]
+      summary: 完成任务（仅执行人）
+      operationId: TaskComplete
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResult'
+              example:
+                success: true
+                status: COMPLETED
+        '401':
+          description: 未登录
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasicResult'
+  /tasks/api/create/:
+    post:
+      tags: [任务]
+      summary: 创建任务
+      operationId: TaskCreate
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreatePayload'
+            example:
+              task_name: 示例任务
+              description: desc
+              assignee_id: 1
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/TaskCreatePayload'
+                - type: object
+                  properties:
+                    attachment:
+                      type: string
+                      format: binary
+      responses:
+        '200':
+          description: 创建结果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  task_id:
+                    type: integer
+                  message:
+                    type: string
+              example:
+                success: true
+                task_id: 37
+        '401':
+          description: 未登录
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasicResult'
+  /tasks/api/{task_id}/update/:
+    post:
+      tags: [任务]
+      summary: 编辑任务（管理员/CEO或创建者）
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdatePayload'
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/TaskUpdatePayload'
+                - type: object
+                  properties:
+                    attachment:
+                      type: string
+                      format: binary
+      responses:
+        '200':
+          description: 编辑结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasicResult'
+  /tasks/api/{task_id}/delete/:
+    post:
+      tags: [任务]
+      summary: 删除任务（管理员/CEO或创建者）
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 删除结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasicResult'
+  /tasks/notifications/stream/:
+    get:
+      tags: [任务]
+      summary: 任务通知SSE流
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: 服务端推送事件流
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: SSE文本行
+  /logs/api/:
+    get:
+      tags: [日志]
+      summary: 日志列表
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: 日期(YYYY-MM-DD)
+        - name: employee_id
+          in: query
+          schema:
+            type: integer
+          description: 管理员按员工筛选
+        - name: view_mode
+          in: query
+          schema:
+            type: string
+            enum: [mine, all]
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: 内容/姓名/标签搜索
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  date:
+                    type: string
+                    format: date
+                  total_count:
+                    type: integer
+                  has_admin_access:
+                    type: boolean
+                  is_boss:
+                    type: boolean
+                  view_mode:
+                    type: string
+                  logs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LogItem'
+  /logs/api/tags/:
+    get:
+      tags: [日志]
+      summary: 获取日志标签
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  tags:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TagItem'
+  /logs/api/create/:
+    post:
+      tags: [日志]
+      summary: 新增日志
+      operationId: LogCreate
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogCreatePayload'
+            example:
+              content: 今天完成文档
+              log_type: WORK
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/LogCreatePayload'
+                - type: object
+                  properties:
+                    log_image:
+                      type: string
+                      format: binary
+      responses:
+        '200':
+          description: 创建结果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  log_id:
+                    type: integer
+                  message:
+                    type: string
+              example:
+                success: true
+                log_id: 84
+        '401':
+          description: 未登录
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasicResult'
+  /logs/api/{log_id}/update/:
+    post:
+      tags: [日志]
+      summary: 编辑日志（本人/管理员）
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: log_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogUpdatePayload'
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/LogUpdatePayload'
+                - type: object
+                  properties:
+                    log_image:
+                      type: string
+                      format: binary
+      responses:
+        '200':
+          description: 编辑结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasicResult'
+  /logs/api/{log_id}/delete/:
+    post:
+      tags: [日志]
+      summary: 删除日志（本人/管理员）
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: log_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 删除结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasicResult'
+  /logs/api/amap/ip/:
+    get:
+      tags: [通用]
+      summary: 高德IP定位代理
+      responses:
+        '200':
+          description: 高德原始JSON
+          content:
+            application/json:
+              schema:
+                type: object
+  /logs/api/amap/regeo/:
+    get:
+      tags: [通用]
+      summary: 高德逆地理代理
+      parameters:
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: coordsys
+          in: query
+          schema:
+            type: string
+            enum: [gps]
+          description: 坐标系，可选gps
+      responses:
+        '200':
+          description: 高德原始JSON
+          content:
+            application/json:
+              schema:
+                type: object
+  /ai/api/dashboard/:
+    get:
+      tags: [AI分析]
+      summary: AI看板
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: scope
+          in: query
+          schema:
+            type: string
+            enum: [personal, department]
+          description: 范围
+        - name: department_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/AIDashboardData'
+  /ai/api/departments/:
+    get:
+      tags: [AI分析]
+      summary: 获取可选部门
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  departments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DepartmentItem'
+  /ai/api/analysis/{employee_id}/:
+    get:
+      tags: [AI分析]
+      summary: 员工AI分析档案
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: employee_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  employee_id:
+                    type: integer
+                  exists:
+                    type: boolean
+                  ai_advice:
+                    type: string
+                  mbti_type:
+                    type: string
+                  mbti_analysis:
+                    type: string
+  /ai/api/mbti/:
+    post:
+      tags: [AI分析]
+      summary: 生成MBTI建议
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mbti]
+              properties:
+                mbti:
+                  type: string
+                  example: INTJ
+                scope:
+                  type: string
+                  enum: [personal, department]
+                  default: personal
+                summary:
+                  type: string
+      responses:
+        '200':
+          description: 生成结果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  mbti:
+                    type: string
+                  scope:
+                    type: string
+                  advice:
+                    type: string
+  /ai/api/mbti_detect/:
+    get:
+      tags: [AI分析]
+      summary: MBTI类型自动推断
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: refresh
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: 推断结果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  type:
+                    type: string
+                  analysis:
+                    type: string
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+  schemas:
+    BasicResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+    StatusResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        status:
+          type: string
+          enum: [TO_DO, IN_PROGRESS, COMPLETED]
+        message:
+          type: string
+    TaskItem:
+      type: object
+      properties:
+        task_id:
+          type: integer
+        task_code:
+          type: string
+          nullable: true
+        task_name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        priority:
+          type: string
+          enum: [HIGH, MEDIUM, LOW]
+        project_source:
+          type: string
+          nullable: true
+        creator_id:
+          type: integer
+        creator_name:
+          type: string
+        assignee_id:
+          type: integer
+          nullable: true
+        assignee_name:
+          type: string
+          nullable: true
+        start_time:
+          type: string
+          nullable: true
+          example: '2025-10-23 09:00'
+        due_time:
+          type: string
+          nullable: true
+        estimated_duration:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum: [TO_DO, IN_PROGRESS, COMPLETED]
+        creation_time:
+          type: string
+        completion_time:
+          type: string
+          nullable: true
+        attachment_url:
+          type: string
+          nullable: true
+    TaskCreatePayload:
+      type: object
+      required: [task_name, description, assignee_id]
+      properties:
+        task_name:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [HIGH, MEDIUM, LOW]
+          default: MEDIUM
+        project_source:
+          type: string
+        assignee_id:
+          type: integer
+        due_time:
+          type: string
+          format: date-time
+        estimated_duration:
+          type: integer
+          description: 分钟
+    TaskUpdatePayload:
+      type: object
+      properties:
+        task_name:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [HIGH, MEDIUM, LOW]
+        project_source:
+          type: string
+        assignee_id:
+          type: integer
+        start_time:
+          type: string
+          format: date-time
+        due_time:
+          type: string
+          format: date-time
+        estimated_duration:
+          type: integer
+        remove_attachment:
+          type: boolean
+    LogItem:
+      type: object
+      properties:
+        log_id:
+          type: integer
+        employee_id:
+          type: integer
+        employee_name:
+          type: string
+        log_time:
+          type: string
+          example: '2025-10-23 10:30'
+        content:
+          type: string
+        log_type:
+          type: string
+          description: 类型中文显示
+        log_type_raw:
+          type: string
+          enum: [WORK, MEETING, COMMUNICATION, DEVELOPMENT, STUDY]
+        emotion_tag:
+          type: string
+          nullable: true
+          description: 情绪中文显示
+        emotion_tag_raw:
+          type: string
+          nullable: true
+          enum: [ACTIVE, FOCUSED, SATISFIED, TIRED]
+        tags:
+          type: array
+          items:
+            type: string
+        image_url:
+          type: string
+          nullable: true
+        location_lat:
+          type: number
+          nullable: true
+        location_lng:
+          type: number
+          nullable: true
+        location_name:
+          type: string
+          nullable: true
+    TagItem:
+      type: object
+      properties:
+        tag_id:
+          type: integer
+        tag_name:
+          type: string
+    LogCreatePayload:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+        log_type:
+          type: string
+          enum: [WORK, MEETING, COMMUNICATION, DEVELOPMENT, STUDY, 工作, 会议, 沟通, 开发, 学习]
+        emotion_tag:
+          type: string
+          enum: [ACTIVE, FOCUSED, SATISFIED, TIRED, 积极, 专注, 满意, 疲惫]
+        tags:
+          type: array
+          items:
+            type: integer
+        location_lat:
+          type: number
+        location_lng:
+          type: number
+        location_name:
+          type: string
+    LogUpdatePayload:
+      type: object
+      properties:
+        content:
+          type: string
+        log_type:
+          type: string
+          enum: [WORK, MEETING, COMMUNICATION, DEVELOPMENT, STUDY, 工作, 会议, 沟通, 开发, 学习]
+        emotion_tag:
+          type: string
+          enum: [ACTIVE, FOCUSED, SATISFIED, TIRED, 积极, 专注, 满意, 疲惫]
+        tags:
+          type: array
+          items:
+            type: integer
+        location_lat:
+          type: number
+        location_lng:
+          type: number
+        location_name:
+          type: string
+        remove_image:
+          type: boolean
+    EmployeeBrief:
+      type: object
+      properties:
+        employee_id:
+          type: integer
+        employee_name:
+          type: string
+        work_id:
+          type: string
+        department_id:
+          type: integer
+          nullable: true
+        position:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [ACTIVE, DISABLED]
+    DepartmentItem:
+      type: object
+      properties:
+        department_id:
+          type: integer
+        department_name:
+          type: string
+    DashboardResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            user_name:
+              type: string
+            current_work_id:
+              type: string
+            current_employee_name:
+              type: string
+            current_employee_id:
+              type: integer
+            task_stats:
+              type: object
+              properties:
+                today_total:
+                  type: integer
+                completed:
+                  type: integer
+                in_progress:
+                  type: integer
+                pending:
+                  type: integer
+            company_tasks:
+              type: array
+              items:
+                $ref: '#/components/schemas/TaskItem'
+            personal_tasks:
+              type: array
+              items:
+                $ref: '#/components/schemas/TaskItem'
+            personal_logs:
+              type: array
+              items:
+                $ref: '#/components/schemas/LogItem'
+            greeting:
+              type: string
+            today:
+              type: string
+            weekday:
+              type: string
+            has_admin_role:
+              type: boolean
+            has_admin_or_ceo_access:
+              type: boolean
+    AIDashboardData:
+      type: object
+      properties:
+        task_stats:
+          type: object
+          properties:
+            recent_total:
+              type: integer
+            completed:
+              type: integer
+            in_progress:
+              type: integer
+            pending:
+              type: integer
+        log_types:
+          type: object
+          additionalProperties:
+            type: integer
+        emotions:
+          type: object
+          additionalProperties:
+            type: integer
+        dept_task_stats:
+          type: object
+          properties:
+            completed:
+              type: integer
+            in_progress:
+              type: integer
+            pending:
+              type: integer
+        ai_advice:
+          type: string
+        scope:
+          type: string
+          enum: [personal, department]
+        department_id:
+          type: integer
+          nullable: true
+        ai_configured:
+          type: boolean
+        debug_advice_length:
+          type: integer

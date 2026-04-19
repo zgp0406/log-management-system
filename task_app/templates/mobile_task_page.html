@@ -1,0 +1,1025 @@
+<!-- FILE: mobile_task_page.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>任务列表</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+  :root { --bg-body: #f4f6f9; --primary-color: #0056b3; }
+  body { 
+    background: var(--bg-body); 
+    /* 移除之前的紫色径向渐变，改用极淡的蓝灰色渐变，更干净 */
+    background-image: linear-gradient(180deg, #e9ecef 0%, #f4f6f9 300px);
+    background-attachment: fixed;
+    padding-bottom: 90px; 
+  }
+
+  /* 顶部固定栏 */
+  .page-header {
+    padding: 24px 24px 10px 24px;
+    padding-top: 24px;
+    /* 取消 sticky 固定 */
+    /* position: sticky; top: calc(56px + env(safe-area-inset-top)); z-index: 1020; */
+    position: relative; 
+    /* 移除背景和阴影，使其融入页面 */
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom: none;
+    box-shadow: none;
+  }
+
+  .header-title-row {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+  }
+  .page-title {
+    font-size: 26px; font-weight: 800;
+    /* 纯色或微渐变深蓝，不再是彩虹色 */
+    color: #0d2137;
+    background: none;
+    -webkit-text-fill-color: initial;
+    margin-bottom: 4px;
+    letter-spacing: -0.5px;
+  }
+  
+  /* 日期筛选美化 */
+  .date-filter-wrapper {
+    display: flex; align-items: center; gap: 8px;
+    background: #fff;
+    border-radius: 20px;
+    padding: 6px 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.05);
+    transition: all 0.2s;
+    width: fit-content;
+  }
+  .date-filter-wrapper:active { transform: scale(0.98); background: #f8fafc; }
+  .date-input-clean {
+    border: none; background: transparent; outline: none;
+    font-size: 14px; font-weight: 600; color: #334155;
+    width: 105px; font-family: inherit;
+  }
+  
+  /* 工具栏容器 */
+  .toolbar {
+    display: flex; gap: 10px; align-items: center;
+  }
+  
+  /* Tab 切换 - 胶囊风格优化 */
+  .nav-tabs-custom {
+      display: flex;
+      background: #e9ecef;
+      border-radius: 50px; /* 全圆角 */
+      padding: 4px;
+      flex: 1;
+  }
+  .nav-tab-item {
+      flex: 1;
+      text-align: center;
+      padding: 8px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #6c757d;
+      border-radius: 40px;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      cursor: pointer;
+  }
+  .nav-tab-item.active {
+      background: #fff;
+      color: var(--primary-color);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  /* 美化输入框 */
+  .modern-input {
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    background: #fff;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #495057;
+    transition: all 0.2s;
+  }
+  .modern-input:focus {
+    background: #fff; border-color: var(--primary-color); outline: none;
+    box-shadow: 0 0 0 4px rgba(0, 86, 179, 0.1); /* 蓝色光晕 */
+  }
+  
+  .search-wrapper {
+    position: relative; width: 100%;
+  }
+  .search-wrapper i {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: #94A3B8; font-size: 13px;
+  }
+  .search-input {
+    width: 100%; padding-left: 34px;
+  }
+
+  /* 任务列表 */
+  .section-title {
+    font-size: 14px; font-weight: 700; color: #64748B; 
+    margin: 20px 0 10px 4px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  
+  .task-card {
+    background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 12px;
+    border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    position: relative; overflow: hidden; transition: transform 0.2s;
+  }
+  .task-card:active { transform: scale(0.98); }
+  
+  /* 优先级左侧条 */
+  .task-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+  .task-card.pri-HIGH::before { background: #EF4444; }
+  .task-card.pri-MEDIUM::before { background: #F59E0B; }
+  .task-card.pri-LOW::before { background: #10B981; }
+  
+  .task-name { font-weight: 700; color: #1E293B; font-size: 16px; margin-bottom: 4px; }
+  .task-meta { font-size: 12px; color: #94A3B8; display: flex; align-items: center; gap: 6px; }
+  .task-desc { font-size: 13px; color: #475569; margin: 8px 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  
+  .badge-status { font-size: 11px; padding: 2px 8px; border-radius: 6px; background: #F1F5F9; color: #64748B; }
+
+  /* 操作按钮 */
+  .btn-action { font-size: 12px; border-radius: 12px; padding: 4px 12px; font-weight: 600; }
+
+  /* 骨架屏 */
+  .skeleton { background: #E2E8F0; border-radius: 6px; position: relative; overflow: hidden; }
+  .shimmer { animation: shimmer 1.5s infinite; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent); position: absolute; inset: 0; }
+  @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+  /* Modal 美化 */
+  .modal-dialog-scrollable {
+    height: auto !important; /* 不强制占满高度 */
+    max-height: 65vh !important; /* 限制整个弹窗（含Header/Footer）的最大高度 */
+    margin-top: auto !important;
+    margin-bottom: auto !important; /* 垂直居中 */
+  }
+  .modal-content {
+    border-radius: 24px;
+    border: none;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-height: 65vh !important; /* 限制内容区域最大高度 */
+    overflow: hidden; /* 防止溢出圆角 */
+  }
+  .modal-dialog {
+    margin: 1.75rem; 
+  }
+  .modal-header {
+    padding: 20px 24px 10px 24px;
+  }
+  .modal-body {
+    padding: 10px 24px 24px 24px;
+    overflow-y: auto; /* 确保内容可滚动 */
+    scrollbar-width: none; /* Firefox 隐藏滚动条 */
+  }
+  .modal-body::-webkit-scrollbar { display: none; /* Chrome/Safari 隐藏滚动条 */ }
+  .modal-footer {
+    border-top: none;
+    padding: 0 24px 24px 24px; /* 底部留白 */
+  }
+  .modal-backdrop.show {
+    opacity: 0.7;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  
+  /* 确保执行人选择弹窗在最上层 */
+  #assigneeModal {
+    z-index: 1070; /* 高于默认的 1055 */
+  }
+  #assigneeModal .modal-backdrop {
+    z-index: 1065; /* 高于默认的 1050 */
+  }
+
+  .form-control, .form-select { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; }
+  
+  /* 执行人选择列表美化 */
+  .assignee-option {
+    display: flex; align-items: center; padding: 12px;
+    border: 1px solid #f1f5f9; border-radius: 12px; margin-bottom: 8px;
+    background: #fff; transition: all 0.2s; cursor: pointer;
+  }
+  .assignee-option:active { background: #f8fafc; transform: scale(0.99); }
+  .assignee-option.selected { border-color: #3b82f6; background: #eff6ff; }
+  .assignee-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #e2e8f0; color: #64748b; font-weight: bold;
+    display: flex; align-items: center; justify-content: center; margin-right: 12px;
+  }
+  .assignee-info { flex: 1; }
+  .assignee-name { font-weight: 600; color: #1e293b; font-size: 15px; }
+  .assignee-id { font-size: 12px; color: #94a3b8; }
+  .assignee-check { width: 20px; height: 20px; border: 2px solid #cbd5e1; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; }
+  .assignee-option.selected .assignee-check { background: #3b82f6; border-color: #3b82f6; }
+
+  /* 强制导航栏固定 */
+  .navbar-glass {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 2000 !important;
+  }
+  
+  /* 员工筛选列表 */
+  .employee-list-item {
+      display: flex; align-items: center; padding: 12px 16px;
+      border-bottom: 1px solid #f1f5f9; cursor: pointer;
+      transition: background 0.2s;
+  }
+  .employee-list-item:active { background: #f8fafc; }
+  .employee-list-item.active { background: #eff6ff; }
+  .employee-list-item.active .emp-name { color: #2563eb; font-weight: 600; }
+  .emp-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: #cbd5e1; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      margin-right: 12px; font-weight: 600; font-size: 13px;
+  }
+  .emp-info { flex: 1; }
+  .emp-name { font-size: 15px; color: #334155; margin-bottom: 2px; }
+  .emp-dept { font-size: 12px; color: #94a3b8; }
+</style>
+</head>
+<body>
+{% include 'mobile_ui.html' %}
+{% include 'mobile_topbar.html' %}
+
+<div class="page-header" id="pageRoot">
+  <div class="header-title-row">
+    <div class="page-title"><i class="fas fa-tasks me-2"></i>任务中心</div>
+    <div class="date-filter-wrapper">
+       <i class="far fa-calendar-alt text-primary"></i>
+       <input id="dateFilter" type="date" class="date-input-clean">
+       <i class="fas fa-times-circle text-muted d-none" id="clearDateBtn" style="cursor:pointer; font-size:14px;"></i>
+    </div>
+  </div>
+  
+  <div class="toolbar">
+    <!-- 视图切换 (仅管理员/有权限可见) -->
+    <button id="filterBtn" class="btn btn-light btn-sm rounded-circle shadow-sm d-none me-2" style="width:34px;height:34px;padding:0; border:1px solid #e2e8f0; display:flex; align-items:center; justify-content:center;"><i class="fas fa-filter text-secondary" style="font-size:13px;"></i></button>
+    <select id="viewModeSelect" class="form-select form-select-sm d-none me-2" style="width:auto; min-width:100px; border-radius:20px; font-weight:bold; color:var(--primary-color); border:none; box-shadow:0 2px 6px rgba(0,0,0,0.05); background-color:#F1F5F9;">
+      <option value="mine">我的任务</option>
+      <option value="all">所有任务</option>
+    </select>
+
+    <!-- Tab 切换 -->
+    <div class="nav-tabs-custom me-2" id="tabContainer">
+        <div id="tabReceived" class="nav-tab-item active" onclick="switchTab('received')">我收到的</div>
+        <div id="tabCreated" class="nav-tab-item" onclick="switchTab('created')">我创建的</div>
+    </div>
+    
+    <button id="newBtn" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm" style="height: 36px;"><i class="fas fa-plus"></i></button>
+  </div>
+  
+  <div class="mt-2">
+    <div class="search-wrapper">
+      <i class="fas fa-search"></i>
+      <input id="searchInput" class="modern-input search-input" placeholder="搜索任务...">
+    </div>
+  </div>
+</div>
+
+<div class="container py-3">
+  <!-- 骨架屏 -->
+  <div id="skeletonBox">
+    <div class="task-card">
+        <div class="skeleton mb-2" style="width:60%; height:20px;"></div>
+        <div class="skeleton mb-2" style="width:40%; height:14px;"></div>
+        <div class="skeleton" style="width:80%; height:14px;"></div>
+    </div>
+  </div>
+
+  <div id="createdWrap" class="d-none">
+    <div id="createdList"></div>
+    <nav aria-label="Page navigation" class="mt-4 mb-3">
+        <ul class="pagination justify-content-center" id="createdPagination"></ul>
+    </nav>
+  </div>
+  
+  <div id="receivedWrap">
+    <div id="receivedList"></div>
+    <nav aria-label="Page navigation" class="mt-4 mb-3">
+        <ul class="pagination justify-content-center" id="receivedPagination"></ul>
+    </nav>
+  </div>
+  
+  <div class="text-center text-muted py-5 d-none" id="emptyState">
+    <i class="fas fa-clipboard-check fa-2x mb-3 text-light-emphasis"></i><br>暂无任务
+  </div>
+</div>
+
+<!-- 员工筛选弹窗 -->
+<div class="modal fade" id="empFilterModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:16px; border:none;">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fs-6 fw-bold">筛选员工</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-2">
+         <input type="text" id="empSearch" class="form-control form-control-sm mb-3 rounded-pill bg-light border-0 px-3" placeholder="搜索姓名..." style="height:36px;">
+         <div id="empList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 执行人选择 Modal (通用) -->
+<div class="modal fade" id="assigneeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:24px; border:none; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">选择执行人</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-2 pb-4">
+        <input type="text" id="assigneeSearch" class="form-control form-control-sm mb-3 rounded-pill bg-light border-0 px-3" placeholder="搜索姓名或工号..." style="height:40px;">
+        <div id="assigneeList" style="min-height:200px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const apiBase = '';
+let currentTab = 'received';
+let currentViewMode = 'mine'; // 'mine' or 'all'
+let currentEmployeeFilter = null;
+let empFilterModalInstance = null;
+
+// 执行人选择相关逻辑
+let assigneeModalInstance = null;
+let onAssigneeSelected = null; // Callback function
+let cachedSubordinates = [];
+
+async function openAssigneeSelector(currentId, callback) {
+    onAssigneeSelected = callback;
+    if(!assigneeModalInstance) assigneeModalInstance = new bootstrap.Modal(document.getElementById('assigneeModal'));
+    
+    const list = document.getElementById('assigneeList');
+    list.innerHTML = '<div class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-primary mb-2"></div><br>加载下属列表...</div>';
+    
+    assigneeModalInstance.show();
+    
+    // 加载数据 (如果有缓存则直接使用，否则请求)
+    if(cachedSubordinates.length === 0){
+        try {
+            const j = await fetchJSON(`/employee/subordinates/?work_id=${currentWorkId}&mode=assignees`);
+            if(j.success) cachedSubordinates = j.subordinates || [];
+        } catch(e){
+            list.innerHTML = '<div class="text-center py-5 text-muted">加载失败，请重试</div>';
+            return;
+        }
+    }
+    
+    renderAssigneeList(cachedSubordinates, currentId);
+    
+    // 绑定搜索
+    document.getElementById('assigneeSearch').oninput = (e) => {
+        const key = e.target.value.toLowerCase();
+        const filtered = cachedSubordinates.filter(s => 
+            s.employee_name.toLowerCase().includes(key) || 
+            s.work_id.toLowerCase().includes(key)
+        );
+        renderAssigneeList(filtered, currentId);
+    };
+}
+
+function renderAssigneeList(items, selectedId) {
+    const list = document.getElementById('assigneeList');
+    if(items.length === 0) {
+        list.innerHTML = '<div class="text-center py-5 text-muted">无匹配结果</div>';
+        return;
+    }
+    
+    list.innerHTML = items.map(s => `
+        <div class="assignee-option ${String(s.employee_id) === String(selectedId) ? 'selected' : ''}" 
+             onclick="selectAssignee('${s.employee_id}', '${s.employee_name}')">
+            <div class="assignee-avatar">${s.employee_name[0]}</div>
+            <div class="assignee-info">
+                <div class="assignee-name">${s.employee_name}</div>
+                <div class="assignee-id">工号: ${s.work_id}</div>
+            </div>
+            <div class="assignee-check"><i class="fas fa-check"></i></div>
+        </div>
+    `).join('');
+}
+
+function selectAssignee(id, name) {
+    if(onAssigneeSelected) onAssigneeSelected(id, name);
+    assigneeModalInstance.hide();
+}
+
+async function loadEmployees(query=''){
+    if(!empFilterModalInstance) empFilterModalInstance = new bootstrap.Modal(document.getElementById('empFilterModal'));
+    
+    const list = document.getElementById('empList');
+    list.innerHTML = '<div class="text-center py-3 text-muted"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>';
+    
+    try {
+        const res = await fetchJSON(`/dashboard/api/employees/?query=${encodeURIComponent(query)}`);
+        list.innerHTML = '';
+        
+        // Add "All Employees" option
+        const allDiv = document.createElement('div');
+        allDiv.className = `employee-list-item ${!currentEmployeeFilter ? 'active' : ''}`;
+        allDiv.innerHTML = `<div class="emp-avatar" style="background:#64748B"><i class="fas fa-users"></i></div>
+                            <div class="emp-info"><div class="emp-name">全部员工</div><div class="emp-dept">显示所有</div></div>`;
+        allDiv.onclick = () => {
+            currentEmployeeFilter = null;
+            empFilterModalInstance.hide();
+            loadAll();
+        };
+        list.appendChild(allDiv);
+    
+        if(res.success && res.employees){
+            res.employees.forEach(emp => {
+                const div = document.createElement('div');
+                div.className = `employee-list-item ${currentEmployeeFilter === emp.employee_id ? 'active' : ''}`;
+                div.innerHTML = `<div class="emp-avatar">${(emp.employee_name||'U')[0]}</div>
+                                 <div class="emp-info"><div class="emp-name">${emp.employee_name}</div><div class="emp-dept">${emp.work_id}</div></div>`;
+                div.onclick = () => {
+                    currentEmployeeFilter = emp.employee_id;
+                    empFilterModalInstance.hide();
+                    loadAll();
+                };
+                list.appendChild(div);
+            });
+        } else {
+             if(res.message) list.innerHTML = `<div class="text-center py-3 text-muted">${res.message}</div>`;
+        }
+    } catch(e){
+        list.innerHTML = '<div class="text-center py-3 text-muted">加载失败</div>';
+    }
+}
+
+function switchTab(tab){
+  if(currentViewMode === 'all') return; // 在“所有任务”模式下忽略Tab切换
+  currentTab = tab;
+  const btnR = document.getElementById('tabReceived');
+  const btnC = document.getElementById('tabCreated');
+  const wrapR = document.getElementById('receivedWrap');
+  const wrapC = document.getElementById('createdWrap');
+  
+  if(tab === 'received'){
+    btnR.className = 'btn btn-sm w-50 rounded-pill fw-bold bg-white shadow-sm text-primary';
+    btnC.className = 'btn btn-sm w-50 rounded-pill fw-bold text-muted';
+    wrapR.classList.remove('d-none');
+    wrapC.classList.add('d-none');
+  } else {
+    btnC.className = 'btn btn-sm w-50 rounded-pill fw-bold bg-white shadow-sm text-primary';
+    btnR.className = 'btn btn-sm w-50 rounded-pill fw-bold text-muted';
+    wrapC.classList.remove('d-none');
+    wrapR.classList.add('d-none');
+  }
+  updateEmptyState();
+}
+
+// 视图切换处理
+function switchViewMode(){
+  currentViewMode = document.getElementById('viewModeSelect').value;
+  const tabContainer = document.getElementById('tabContainer');
+  const wrapR = document.getElementById('receivedWrap');
+  const wrapC = document.getElementById('createdWrap');
+  
+  if(currentViewMode === 'all'){
+      // 隐藏 Tab，只显示 createdWrap (复用为列表容器)
+      tabContainer.classList.add('d-none');
+      wrapR.classList.add('d-none');
+      wrapC.classList.remove('d-none');
+      // 重置页码
+      pageCreated = 1;
+  } else {
+      // 显示 Tab，恢复当前 Tab 状态
+      tabContainer.classList.remove('d-none');
+      switchTab(currentTab);
+  }
+  loadAll();
+}
+
+let canSwitchAll = false;
+let currentWorkId = null;
+let pageCreated = 1;
+let pageReceived = 1;
+let pageSizeCreated = 5;
+let pageSizeReceived = 5;
+
+async function fetchJSON(url, options={}){
+  const resp = await fetch(url, Object.assign({ credentials:'include', headers:{'Accept':'application/json','Content-Type':'application/json'} }, options));
+  return resp.json();
+}
+
+function renderTasks(listEl, items, isReceived){
+  listEl.innerHTML = '';
+  if(!items || items.length === 0){
+    listEl.innerHTML = '<div class="text-center text-muted py-3 small">暂无任务</div>';
+    return;
+  }
+  items.forEach(t=>{
+    const el = document.createElement('div');
+    el.className = `task-card pri-${t.priority}`;
+    
+    const statusMap = { TO_DO:'待办', IN_PROGRESS:'进行中', COMPLETED:'已完成' };
+    
+    el.innerHTML = `
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="flex-grow-1" style="min-width:0;">
+          <div class="task-name text-truncate">${t.task_name}</div>
+          <div class="task-meta">
+            <span>${t.creator_name || '未知'} <i class="fas fa-arrow-right mx-1" style="font-size:10px;"></i> ${t.assignee_name || '-'}</span>
+            <span>• ${t.creation_time.split(' ')[0] || ''}</span>
+          </div>
+          <div class="task-desc">${t.description ? t.description.replace(/</g,'&lt;') : '无描述'}</div>
+          <div class="mt-2 d-flex align-items-center gap-2">
+             <span class="badge-status">${statusMap[t.status]||t.status}</span>
+          </div>
+        </div>
+        <div class="ms-2 d-flex flex-column gap-2 align-items-end">
+          ${isReceived ? actionButtons(t) : `<button class="btn btn-light btn-sm btn-action text-secondary border" data-act="detail" data-id="${t.task_id}">详情</button>`}
+        </div>
+      </div>`;
+    
+    // 在“所有任务”模式下，虽然数据放在 createdList，但我们允许像“详情”那样点击查看
+    // 实际上 actionButtons(t) 是用于操作（接取/完成），而详情按钮用于查看/编辑
+    // 如果是所有任务模式，我们统一显示“详情”按钮，让有权限的人进去编辑
+    
+    bindActions(el, t, isReceived);
+    listEl.appendChild(el);
+  });
+}
+
+
+function actionButtons(t){
+  let btns = '';
+  if(t.status === 'TO_DO') btns += `<button class="btn btn-primary btn-sm btn-action" data-act="take" data-id="${t.task_id}">接取</button>`;
+  else if(t.status === 'IN_PROGRESS') {
+      btns += `<button class="btn btn-success btn-sm btn-action mb-1" data-act="complete" data-id="${t.task_id}">完成</button>`;
+      btns += `<a class="btn btn-outline-secondary btn-sm btn-action" href="/m/tasks/${t.task_id}/" onclick="event.stopPropagation()">子任务</a>`;
+  }
+  else btns += `<span class="badge bg-success rounded-pill"><i class="fas fa-check"></i></span>`;
+  return btns;
+}
+
+function bindActions(container, t, isReceived){
+  const btns = container.querySelectorAll('[data-act]');
+  btns.forEach(btn => {
+    btn.onclick = async (e)=>{
+      e.stopPropagation();
+      let busy = false;
+      if(busy) return; busy = true; btn.disabled = true;
+      const id = btn.dataset.id;
+      const act = btn.dataset.act;
+      
+      let url = '';
+      if(act === 'take') url = `${apiBase}/tasks/api/${id}/take/`;
+      else if(act === 'complete') url = `${apiBase}/tasks/api/${id}/complete/`;
+      
+      if(url){
+          const res = await fetchJSON(url, { method:'POST', body:'{}' });
+          if(res.success){ MobileUI.toast('操作成功'); MobileUI.haptic(10); loadAll(); } 
+          else { MobileUI.toast(res.message || '操作失败'); }
+      } else if (act === 'detail'){
+          openTaskDetail(t);
+      }
+      busy = false; btn.disabled = false;
+    };
+  });
+  
+  // 仅在“我收到的”任务中启用卡片点击跳转
+  if(isReceived){
+      container.style.cursor = 'pointer';
+      container.addEventListener('click', function(e){
+        if(e.target.closest('button') || e.target.closest('a')) return;
+        window.location.href = `/m/tasks/${t.task_id}/`;
+      });
+  }
+}
+
+async function loadAll(){
+  // const view = document.getElementById('viewMode').value; 
+  const view = currentViewMode;
+  const q = document.getElementById('searchInput').value.trim();
+  const dateVal = document.getElementById('dateFilter').value;
+  
+  // UI Control for Filter Button
+  const filterBtn = document.getElementById('filterBtn');
+  if(view === 'all'){
+      filterBtn.classList.remove('d-none');
+      if(currentEmployeeFilter) filterBtn.classList.add('btn-primary', 'text-white');
+      else filterBtn.classList.remove('btn-primary', 'text-white');
+  } else {
+      filterBtn.classList.add('d-none');
+      currentEmployeeFilter = null; // Reset filter when switching to 'mine'
+  }
+  
+  let url = `${apiBase}/tasks/api/?view_mode=${encodeURIComponent(view)}&page_created=${pageCreated}&page_size_created=${pageSizeCreated}&page_received=${pageReceived}&page_size_received=${pageSizeReceived}`;
+  if(q) url += `&search=${encodeURIComponent(q)}`;
+  if(dateVal) url += `&date=${encodeURIComponent(dateVal)}`;
+  if(currentEmployeeFilter) url += `&employee_id=${currentEmployeeFilter}`;
+  
+  const res = await fetchJSON(url);
+  const created = document.getElementById('createdList');
+  const received = document.getElementById('receivedList');
+  
+  if(!res.success){
+    MobileUI.error(created, res.message||'加载失败');
+    return;
+  }
+  
+  // 处理视图切换开关显示
+  canSwitchAll = !!(res.has_admin_access || res.can_view_all_tasks);
+  const vmSelect = document.getElementById('viewModeSelect');
+  if(canSwitchAll){
+      vmSelect.classList.remove('d-none');
+  } else {
+      vmSelect.classList.add('d-none');
+      // 如果没权限但当前是all模式，强制切回mine
+      if(currentViewMode === 'all'){
+          currentViewMode = 'mine';
+          vmSelect.value = 'mine';
+          switchViewMode();
+          return;
+      }
+  }
+  
+  // 如果是“所有任务”模式，数据全在 tasks_created，且我们复用 createdList 容器
+  if(currentViewMode === 'all'){
+      renderTasks(created, res.tasks_created || [], false);
+      // 隐藏 received
+      received.innerHTML = ''; 
+      renderPager('created', res.created_page, res.created_total_pages, res.created_total_count);
+  } else {
+      // 正常模式
+      renderTasks(created, res.tasks_created || [], false);
+      renderTasks(received, res.tasks_received || [], true);
+      renderPager('created', res.created_page, res.created_total_pages, res.created_total_count);
+      renderPager('received', res.received_page, res.received_total_pages, res.received_total_count);
+  }
+
+  pageCreated = res.created_page || pageCreated;
+  pageReceived = res.received_page || pageReceived;
+  pageSizeCreated = res.created_page_size || pageSizeCreated;
+  pageSizeReceived = res.received_page_size || pageSizeReceived;
+  
+  // setLastUpdated(); // 已移除
+  
+  // Hide skeleton after load
+  const skel = document.getElementById('skeletonBox');
+  if(skel) skel.classList.add('d-none');
+  
+  // Update empty state visibility based on current tab
+  updateEmptyState();
+}
+
+function updateEmptyState(){
+  // 在 All 模式下，只检查 createdList
+  if(currentViewMode === 'all'){
+      const list = document.getElementById('createdList');
+      const empty = document.getElementById('emptyState');
+      if(list.innerText.includes('暂无任务') || list.children.length === 0){
+         empty.classList.remove('d-none');
+         list.classList.add('d-none');
+      } else {
+         empty.classList.add('d-none');
+         list.classList.remove('d-none');
+      }
+      return;
+  }
+
+  const wrapR = document.getElementById('receivedWrap');
+  const empty = document.getElementById('emptyState');
+  const isReceived = !wrapR.classList.contains('d-none');
+  const list = isReceived ? document.getElementById('receivedList') : document.getElementById('createdList');
+  
+  // If the list has "暂无任务" or is empty
+  if(list.innerText.includes('暂无任务') || list.children.length === 0){
+     empty.classList.remove('d-none');
+     list.classList.add('d-none'); // Hide the list container if empty to show the big empty state
+  } else {
+     empty.classList.add('d-none');
+     list.classList.remove('d-none');
+  }
+}
+
+(function init(){
+  document.getElementById('viewModeSelect').onchange = switchViewMode;
+  // 搜索防抖
+  let searchTimer = null;
+  document.getElementById('searchInput').oninput = (e) => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(loadAll, 500); // 500ms 防抖
+  };
+  document.getElementById('searchInput').onkeydown = (e)=>{ if(e.key==='Enter') { clearTimeout(searchTimer); loadAll(); } };
+  
+  const dateInput = document.getElementById('dateFilter');
+  const clearDateBtn = document.getElementById('clearDateBtn');
+  dateInput.onchange = ()=>{
+      if(dateInput.value) clearDateBtn.classList.remove('d-none');
+      else clearDateBtn.classList.add('d-none');
+      loadAll();
+  };
+  clearDateBtn.onclick = ()=>{
+      dateInput.value = '';
+      clearDateBtn.classList.add('d-none');
+      loadAll();
+  };
+
+  document.getElementById('newBtn').onclick = openNewTask;
+  
+  document.getElementById('filterBtn').onclick = () => {
+      loadEmployees();
+      if(!empFilterModalInstance) empFilterModalInstance = new bootstrap.Modal(document.getElementById('empFilterModal'));
+      empFilterModalInstance.show();
+  };
+  
+  // 员工搜索防抖
+  let empSearchTimer = null;
+  document.getElementById('empSearch').oninput = (e) => {
+      clearTimeout(empSearchTimer);
+      empSearchTimer = setTimeout(() => loadEmployees(e.target.value), 400);
+  };
+  
+  fetchJSON('/dashboard/api/').then(j=>{ if(j && j.success){ currentWorkId = j.data.current_work_id; }});
+  loadAll();
+  MobileUI.fadeIn('body');
+  MobileUI.bindNavFade('body');
+})();
+
+function setLastUpdated(){
+  const el = document.getElementById('lastUpdated');
+  const d = new Date();
+  const pad = n=> (n<10?('0'+n):n);
+  el.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// 任务详情 Modal
+const detailModal = (()=>{
+  const wrap = document.createElement('div');
+  wrap.className='modal fade';
+  wrap.id='taskDetailModal';
+  wrap.innerHTML = `
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0" style="border-radius: 24px; overflow: hidden;">
+        <div class="modal-header border-0 pb-0" style="background: linear-gradient(135deg, #EEF2FF 0%, #fff 100%);">
+          <h5 class="modal-title fw-bold text-primary"><i class="fas fa-edit me-2"></i>编辑任务</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: grayscale(1);"></button>
+        </div>
+        <div class="modal-body pt-3 px-4" id="taskDetailBody"></div>
+        <div class="modal-footer border-0 px-4 pb-4 justify-content-between">
+          <button class="btn btn-light text-danger fw-bold px-3 rounded-pill" id="delTaskBtn" style="background:#FEF2F2;"><i class="fas fa-trash-alt me-1"></i> 删除</button>
+          <button class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold" id="saveTaskBtn"><i class="fas fa-save me-1"></i> 保存修改</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+  return new bootstrap.Modal('#taskDetailModal');
+})();
+
+async function openTaskDetail(task){
+  const body = document.getElementById('taskDetailBody');
+  body.innerHTML = `
+    <div class="mb-3">
+      <label class="form-label small text-muted fw-bold text-uppercase"><i class="fas fa-heading me-1"></i> 任务名称</label>
+      <input id="dtName" class="form-control bg-light border-0" value="${task.task_name||''}" style="font-weight:600; font-size:16px;">
+    </div>
+    <input type="hidden" id="dtVersion" value="${task.version||0}">
+    
+    <div class="mb-3">
+      <label class="form-label small text-muted fw-bold text-uppercase"><i class="fas fa-align-left me-1"></i> 描述</label>
+      <textarea id="dtDesc" class="form-control bg-light border-0" rows="3" style="font-size:14px;">${task.description||''}</textarea>
+    </div>
+    
+    <div class="row g-3 mb-3">
+        <div class="col-6">
+          <label class="form-label small text-muted fw-bold text-uppercase"><i class="fas fa-flag me-1"></i> 优先级</label>
+          <select id="dtPri" class="form-select bg-light border-0">
+            <option value="HIGH" ${task.priority==='HIGH'?'selected':''}>🔴 高</option>
+            <option value="MEDIUM" ${task.priority==='MEDIUM'?'selected':''}>🟠 中</option>
+            <option value="LOW" ${task.priority==='LOW'?'selected':''}>🟢 低</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label class="form-label small text-muted fw-bold text-uppercase"><i class="fas fa-code-branch me-1"></i> 来源</label>
+          <input id="dtProject" class="form-control bg-light border-0" value="${task.project_source||''}">
+        </div>
+    </div>
+    
+    <div class="mb-3">
+      <label class="form-label small text-muted fw-bold text-uppercase"><i class="fas fa-user-tag me-1"></i> 执行人</label>
+      <div class="input-group" onclick="openAssigneeSelector(document.getElementById('dtAssigneeId').value, (id, name)=>{ document.getElementById('dtAssigneeId').value=id; document.getElementById('dtAssigneeName').value=name; })" style="cursor:pointer;">
+        <span class="input-group-text bg-light border-0 pe-1"><i class="fas fa-user text-muted"></i></span>
+        <input id="dtAssigneeName" class="form-control bg-light border-0 ps-1" value="加载中..." readonly style="background: #F8FAFC !important; cursor:pointer;">
+        <input type="hidden" id="dtAssigneeId">
+        <span class="input-group-text bg-light border-0"><i class="fas fa-chevron-right text-muted small"></i></span>
+      </div>
+    </div>
+    
+    <div class="row g-3">
+        <div class="col-6">
+          <label class="form-label small text-muted fw-bold text-uppercase"><i class="far fa-clock me-1"></i> 截止</label>
+          <input id="dtDue" type="datetime-local" class="form-control bg-light border-0" value="${(task.due_time||'').replace(' ','T')}" style="font-size:13px;">
+        </div>
+        <div class="col-6">
+          <label class="form-label small text-muted fw-bold text-uppercase"><i class="fas fa-hourglass-half me-1"></i> 时长(分)</label>
+          <input id="dtDur" type="number" class="form-control bg-light border-0" value="${task.estimated_duration||''}">
+        </div>
+    </div>`;
+
+  // 初始化执行人显示
+  const assignNameInput = document.getElementById('dtAssigneeName');
+  const assignIdInput = document.getElementById('dtAssigneeId');
+  assignNameInput.value = task.assignee_name || '未指定';
+  assignIdInput.value = task.assignee_id || '';
+  
+  // (旧代码移除) const sel = document.getElementById('dtAssignee'); ...
+  
+  document.getElementById('saveTaskBtn').onclick = async ()=>{
+    const payload = {
+      task_name: document.getElementById('dtName').value.trim(),
+      description: document.getElementById('dtDesc').value.trim(),
+      priority: document.getElementById('dtPri').value,
+      project_source: document.getElementById('dtProject').value.trim(),
+      version: document.getElementById('dtVersion').value // 提交版本号
+    };
+    const aid = document.getElementById('dtAssigneeId').value;
+    if(!aid){ MobileUI.toast('请选择执行人'); return; }
+    const due = document.getElementById('dtDue').value;
+    const dur = document.getElementById('dtDur').value;
+    payload.assignee_id = parseInt(aid);
+    if(due) payload.due_time = due;
+    if(dur) payload.estimated_duration = parseInt(dur);
+    
+    const res = await fetchJSON(`/tasks/api/${task.task_id}/update/`, { method:'POST', body: JSON.stringify(payload) });
+    if(res && res.success){ MobileUI.toast('已保存'); detailModal.hide(); loadAll(); } else { MobileUI.toast((res&&res.message)||'保存失败'); }
+  };
+  
+  document.getElementById('delTaskBtn').onclick = async ()=>{
+    if(!confirm('确认删除该任务？')) return;
+    const res = await fetchJSON(`/tasks/api/${task.task_id}/delete/`, { method:'POST', body:'{}' });
+    if(res && res.success){ MobileUI.toast('已删除'); detailModal.hide(); loadAll(); } else { MobileUI.toast((res&&res.message)||'删除失败'); }
+  };
+  detailModal.show();
+}
+
+// 新建 Modal
+const newModal = (()=>{
+  const wrap = document.createElement('div');
+  wrap.className='modal fade';
+  wrap.id='newTaskModal';
+  wrap.innerHTML = `
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0" style="border-radius: 24px; overflow: hidden;">
+        <div class="modal-header border-0 pb-0" style="background: linear-gradient(135deg, #EEF2FF 0%, #fff 100%);">
+          <h5 class="modal-title fw-bold text-primary"><i class="fas fa-magic me-2"></i>新建任务</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: grayscale(1);"></button>
+        </div>
+        <div class="modal-body pt-3 px-4">
+          <div class="mb-3">
+            <label class="form-label small text-muted fw-bold text-uppercase"><i class="fas fa-heading me-1"></i> 名称</label>
+            <input id="nwName" class="form-control bg-light border-0" placeholder="做什么？" style="font-weight:600;">
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label small text-muted fw-bold text-uppercase"><i class="fas fa-align-left me-1"></i> 描述</label>
+            <textarea id="nwDesc" class="form-control bg-light border-0" rows="3" placeholder="任务细节..."></textarea>
+          </div>
+          
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label small text-muted fw-bold text-uppercase"><i class="fas fa-flag me-1"></i> 优先级</label>
+              <select id="nwPri" class="form-select bg-light border-0">
+                <option value="HIGH">🔴 高</option>
+                <option value="MEDIUM" selected>🟠 中</option>
+                <option value="LOW">🟢 低</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small text-muted fw-bold text-uppercase"><i class="fas fa-user-tag me-1"></i> 执行人</label>
+              <div class="input-group" onclick="openAssigneeSelector(document.getElementById('nwAssigneeId').value, (id, name)=>{ document.getElementById('nwAssigneeId').value=id; document.getElementById('nwAssigneeName').value=name; })" style="cursor:pointer;">
+                <input id="nwAssigneeName" class="form-control bg-light border-0 ps-3" placeholder="选择执行人" readonly style="background: #F8FAFC !important; cursor:pointer;">
+                <input type="hidden" id="nwAssigneeId">
+                <span class="input-group-text bg-light border-0"><i class="fas fa-chevron-right text-muted small"></i></span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label small text-muted fw-bold text-uppercase"><i class="far fa-clock me-1"></i> 截止</label>
+                <input id="nwDue" type="datetime-local" class="form-control bg-light border-0" style="font-size:13px;">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted fw-bold text-uppercase"><i class="fas fa-hourglass-half me-1"></i> 时长</label>
+                <input id="nwDur" type="number" class="form-control bg-light border-0" placeholder="分钟">
+              </div>
+          </div>
+          
+          <div class="mb-2">
+            <label class="form-label small text-muted fw-bold text-uppercase"><i class="fas fa-paperclip me-1"></i> 附件</label>
+            <input id="nwAttachment" type="file" class="form-control bg-light border-0" accept="image/*">
+          </div>
+        </div>
+        <div class="modal-footer border-0 px-4 pb-4">
+          <button class="btn btn-primary w-100 rounded-pill shadow-sm fw-bold py-2" id="createTaskBtn">
+            <i class="fas fa-plus-circle me-1"></i> 立即创建
+          </button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+  return new bootstrap.Modal('#newTaskModal');
+})();
+
+async function openNewTask(){
+  // 清空旧值
+  document.getElementById('nwName').value = '';
+  document.getElementById('nwDesc').value = '';
+  document.getElementById('nwAssigneeId').value = '';
+  document.getElementById('nwAssigneeName').value = '';
+  document.getElementById('nwDue').value = '';
+  document.getElementById('nwDur').value = '';
+  document.getElementById('nwAttachment').value = '';
+  
+  // (旧代码移除) const sel = document.getElementById('nwAssignee'); ...
+  
+  document.getElementById('createTaskBtn').onclick = createTask;
+  newModal.show();
+}
+
+async function createTask(){
+  const fd = new FormData();
+  fd.set('task_name', document.getElementById('nwName').value.trim());
+  fd.set('description', document.getElementById('nwDesc').value.trim());
+  fd.set('priority', document.getElementById('nwPri').value);
+  const aid = document.getElementById('nwAssigneeId').value;
+  if(!aid){ MobileUI.toast('请选择执行人'); return; }
+  fd.set('assignee_id', aid);
+  const due = document.getElementById('nwDue').value;
+  const dur = document.getElementById('nwDur').value;
+  if(due) fd.set('due_time', due);
+  if(dur) fd.set('estimated_duration', dur);
+  const file = document.getElementById('nwAttachment').files[0];
+  if(file) fd.append('attachment', file);
+  try{
+    const resp = await fetch('/tasks/api/create/', { method:'POST', body: fd, credentials:'include' });
+    const res = await resp.json();
+    if(res && res.success){ MobileUI.toast('已创建'); newModal.hide(); loadAll(); } else { MobileUI.toast((res&&res.message)||'创建失败'); }
+  }catch(e){ MobileUI.toast('网络错误'); }
+}
+</script>
+<script>
+function renderPager(kind, page, totalPages, totalCount){
+  const nav = document.getElementById(kind==='created' ? 'createdPagination' : 'receivedPagination');
+  nav.innerHTML = '';
+  if(!page || !totalPages || totalPages <= 1) return;
+
+  const createItem = (text, targetPage, isActive=false, isDisabled=false) => {
+    const li = document.createElement('li');
+    li.className = `page-item ${isActive?'active':''} ${isDisabled?'disabled':''}`;
+    li.innerHTML = `<a class="page-link shadow-none" href="javascript:void(0)" style="border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; margin:0 2px; ${isActive?'background-color:#0056b3; border-color:#0056b3; color:#fff;':'color:#64748B; border:none; background:#F1F5F9;'}">${text}</a>`;
+    
+    if(!isDisabled && !isActive){
+        li.onclick = () => {
+            if(kind === 'created') pageCreated = targetPage;
+            else pageReceived = targetPage;
+            loadAll();
+        };
+    }
+    return li;
+  };
+
+  // Prev
+  nav.appendChild(createItem('<i class="fas fa-chevron-left" style="font-size:12px;"></i>', page-1, false, page<=1));
+
+  let start = Math.max(1, page - 2);
+  let end = Math.min(totalPages, page + 2);
+
+  if(start > 1) {
+     nav.appendChild(createItem('1', 1));
+     if(start > 2) nav.appendChild(createItem('...', null, false, true));
+  }
+
+  for(let i=start; i<=end; i++){
+     nav.appendChild(createItem(i, i, i===page));
+  }
+
+  if(end < totalPages){
+     if(end < totalPages - 1) nav.appendChild(createItem('...', null, false, true));
+     nav.appendChild(createItem(totalPages, totalPages));
+  }
+
+  // Next
+  nav.appendChild(createItem('<i class="fas fa-chevron-right" style="font-size:12px;"></i>', page+1, false, page>=totalPages));
+}
+</script>
+{% include 'mobile_nav.html' %}
+</body>
+</html>

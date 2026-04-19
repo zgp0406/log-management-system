@@ -1,0 +1,345 @@
+<!-- FILE: mobile_task_detail_page.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>任务详情</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+  :root { --bg-body: #F5F7FA; --primary-color: #4F46E5; }
+  body{ background: var(--bg-body); padding-bottom: 40px; }
+
+  /* 导航 */
+  /* .detail-nav { padding: 16px; background: #fff; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(0,0,0,0.05); } */
+  
+  /* 主卡片 */
+  .detail-card {
+    background: #fff; border-radius: 20px; padding: 20px;
+    margin-bottom: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+    border: none;
+  }
+  
+  /* 进度条 */
+  .progress-container { margin-bottom: 20px; text-align: center; }
+  .progress-bg { height: 12px; background: #E2E8F0; border-radius: 6px; overflow: hidden; margin-top: 10px; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #4F46E5, #818CF8); width: 0; transition: width 0.5s ease; }
+  .progress-num { font-size: 32px; font-weight: 800; color: #1E293B; }
+  
+  /* 标题与元数据 */
+  .task-title { font-size: 20px; font-weight: 700; color: #1E293B; margin-bottom: 12px; }
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px; color: #64748B; margin-bottom: 16px; }
+  .meta-item i { width: 20px; color: #94A3B8; }
+
+  /* 描述与附件 */
+  .desc-box { background: #F8FAFC; border-radius: 12px; padding: 12px; font-size: 14px; color: #334155; line-height: 1.6; margin-bottom: 16px; }
+  .attach-preview { width: 100%; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 8px; }
+
+  /* 子任务 */
+  .subtask-item {
+    background: #fff; border-bottom: 1px solid #F1F5F9; padding: 14px 0;
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .subtask-item:last-child { border-bottom: none; }
+  
+  .st-check {
+    font-size: 20px; color: #CBD5E1; cursor: pointer; transition: color 0.2s;
+    margin-top: 2px;
+  }
+  .st-check.checked { color: #10B981; }
+  
+  .st-content { flex: 1; }
+  .st-name { font-weight: 600; color: #334155; font-size: 15px; }
+  .st-desc { font-size: 12px; color: #94A3B8; margin-top: 2px; }
+  .st-completed .st-name { text-decoration: line-through; color: #94A3B8; }
+
+  .action-bar { display: flex; gap: 10px; justify-content: flex-end; }
+  
+  /* 模态框 */
+  .modal-content { border-radius: 20px; border: none; }
+</style>
+</head>
+<body>
+{% include 'mobile_ui.html' %}
+{% include 'mobile_topbar.html' %}
+
+<div class="page-header" id="pageRoot" style="padding-top: max(24px, env(safe-area-inset-top)); position: sticky; top: 0; z-index: 1020; background: rgba(255, 255, 255, 0.95); border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 10px;">
+  <div class="d-flex align-items-center px-3 py-2">
+    <a href="/m/tasks/" class="text-decoration-none text-dark d-flex align-items-center me-3">
+      <i class="fas fa-arrow-left fs-5"></i>
+    </a>
+    <div class="flex-grow-1 text-center fw-bold fs-5 text-dark" style="margin-right: 24px;">任务详情</div>
+  </div>
+</div>
+
+<div class="container py-3">
+
+  <!-- 进度卡片 -->
+  <div class="detail-card">
+    <div class="d-flex justify-content-between text-muted small fw-bold text-uppercase">
+        <span>Project Progress</span>
+        <span>Subtasks</span>
+    </div>
+    <div class="progress-container">
+       <div class="progress-num" id="progressText">0%</div>
+       <div class="progress-bg"><div id="progressFill" class="progress-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- 详情卡片 -->
+  <div class="detail-card">
+    <div class="d-flex justify-content-between align-items-start">
+        <div class="task-title" id="taskName">加载中...</div>
+        <div id="actions"></div>
+    </div>
+    
+    <div class="meta-grid" id="metaArea">
+        <!-- JS 填充 -->
+    </div>
+    
+    <div class="fw-bold mb-2 small text-muted">任务描述</div>
+    <div class="desc-box" id="desc">无描述</div>
+
+    <div id="attachmentCard" class="d-none mt-3">
+        <div class="fw-bold mb-2 small text-muted"><i class="fas fa-paperclip me-1"></i> 附件</div>
+        <a id="attachmentLink" href="#" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill mb-2">下载原文件</a>
+        <img id="attachmentImage" src="" class="attach-preview" alt="附件">
+    </div>
+  </div>
+
+  <!-- 子任务卡片 -->
+  <div class="detail-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="fw-bold text-dark"><i class="fas fa-tasks me-2 text-primary"></i>子任务</div>
+      <button class="btn btn-primary btn-sm rounded-pill px-3" id="addSubtaskBtn"><i class="fas fa-plus"></i> 新增</button>
+    </div>
+    <div id="subtasks">
+        <div class="text-center text-muted py-3 small">暂无子任务</div>
+    </div>
+  </div>
+</div>
+
+<!-- 新增/编辑子任务 Modal -->
+<div class="modal fade" id="subtaskEditor" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-bottom-0">
+        <h5 class="modal-title fw-bold" id="editorTitle">新增子任务</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label text-muted small">名称</label>
+          <input id="subtaskName" class="form-control bg-light border-0" placeholder="做什么？">
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted small">描述</label>
+          <textarea id="subtaskDesc" class="form-control bg-light border-0" rows="3" placeholder="具体细节..."></textarea>
+        </div>
+        <div class="d-grid">
+           <button class="btn btn-primary rounded-pill py-2" id="saveSubtaskBtn">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const apiBase = '';
+const taskId = parseInt('{{ task_id }}', 10);
+let editingSubtaskId = null;
+let editor = null; // 延迟初始化
+
+async function fetchJSON(url, options={}){
+  try {
+      const resp = await fetch(url, Object.assign({ credentials:'include' }, options));
+      if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      return await resp.json();
+  } catch(e){ 
+      console.error("Fetch Error:", e);
+      MobileUI.toast(`网络请求失败: ${e.message}`);
+      return {}; 
+  }
+}
+
+function esc(s){ return (s||'').replace(/</g,'&lt;'); }
+
+async function loadTask(){
+  // 显示加载状态（如果是首次）
+  if(document.getElementById('taskName').textContent === '加载中...') {
+      // 保持加载状态
+  }
+
+  const data = await fetchJSON(`${apiBase}/tasks/${taskId}/`);
+  
+  if(!data || !data.task_name){ 
+      document.getElementById('taskName').innerHTML = '<span class="text-danger">加载失败</span>';
+      document.getElementById('desc').textContent = '无法获取任务详情，请检查网络或刷新重试。';
+      return; 
+  }
+  
+  document.getElementById('taskName').textContent = data.task_name;
+  document.getElementById('desc').innerHTML = (data.description||'无描述').replace(/\n/g, '<br>');
+
+  const priMap = { HIGH:'<span class="text-danger">高</span>', MEDIUM:'<span class="text-warning">中</span>', LOW:'<span class="text-success">低</span>' };
+  const statusMap = { TO_DO:'待办', IN_PROGRESS:'进行中', COMPLETED:'已完成' };
+  
+  document.getElementById('metaArea').innerHTML = `
+    <div class="meta-item"><i class="fas fa-flag"></i> 优先级: ${priMap[data.priority]||data.priority}</div>
+    <div class="meta-item"><i class="fas fa-info-circle"></i> 状态: ${statusMap[data.status]||data.status}</div>
+    <div class="meta-item"><i class="fas fa-user"></i> 创建: ${data.creator}</div>
+    <div class="meta-item"><i class="fas fa-user-check"></i> 执行: ${data.assignee||'-'}</div>
+    <div class="meta-item" style="grid-column: span 2;"><i class="far fa-clock"></i> 截止: ${data.due_time || '无'}</div>
+  `;
+
+  const attachmentCard = document.getElementById('attachmentCard');
+  if(data.attachment_url){
+    attachmentCard.classList.remove('d-none');
+    document.getElementById('attachmentLink').href = data.attachment_url;
+    document.getElementById('attachmentImage').src = data.attachment_url;
+  }else{
+    attachmentCard.classList.add('d-none');
+  }
+  
+  renderActions(data); // 传递整个 data 对象以获取权限信息
+}
+
+function renderActions(data){
+  const status = data.status;
+  const area = document.getElementById('actions');
+  area.innerHTML = '';
+  if(status === 'TO_DO'){
+    area.innerHTML = `<button class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm" onclick="takeTask()">接取任务</button>`;
+  }else if(status === 'IN_PROGRESS'){
+    area.innerHTML = `<button class="btn btn-success btn-sm rounded-pill px-3 shadow-sm" onclick="finishTask()">完成任务</button>`;
+  } else {
+    area.innerHTML = `<span class="badge bg-success rounded-pill"><i class="fas fa-check me-1"></i>已完成</span>`;
+  }
+
+  // 子任务按钮显示逻辑：
+  const isCreator = !!data.is_creator;
+  const isAssignee = !!data.is_assignee;
+  // 创建者始终可以添加（除非已完成），执行人必须在进行中才能添加
+  const canAddSubtask = (isCreator && status !== 'COMPLETED') || (isAssignee && status === 'IN_PROGRESS');
+  
+  const addBtn = document.getElementById('addSubtaskBtn');
+  if(addBtn) addBtn.style.display = canAddSubtask ? '' : 'none';
+}
+
+// 封装成独立函数方便调用
+window.takeTask = async () => {
+   const r=await fetchJSON(`${apiBase}/tasks/api/${taskId}/take/`, {method:'POST', body:'{}', headers:{'Content-Type':'application/json'}}); 
+   if(r.success){ MobileUI.toast('已接取'); MobileUI.haptic(10); loadTask(); loadSubtasks(); } else { MobileUI.toast(r.message||'操作失败'); }
+}
+window.finishTask = async () => {
+   const r=await fetchJSON(`${apiBase}/tasks/api/${taskId}/complete/`, {method:'POST', body:'{}', headers:{'Content-Type':'application/json'}}); 
+   if(r.success){ MobileUI.toast('已完成'); MobileUI.haptic(10); loadTask(); loadSubtasks(); } else { MobileUI.toast(r.message||'操作失败'); }
+}
+
+function openEditor(sub){
+  if(!editor) {
+      try { editor = new bootstrap.Modal('#subtaskEditor'); } 
+      catch(e) { console.error("Bootstrap init failed:", e); return; }
+  }
+  editingSubtaskId = sub ? sub.subtask_id : null;
+  document.getElementById('editorTitle').textContent = editingSubtaskId ? '编辑子任务' : '新增子任务';
+  document.getElementById('subtaskName').value = sub ? (sub.subtask_name||'') : '';
+  document.getElementById('subtaskDesc').value = sub ? (sub.description||'') : '';
+  editor.show();
+}
+
+async function saveSubtask(){
+  const name = document.getElementById('subtaskName').value.trim();
+  const desc = document.getElementById('subtaskDesc').value.trim();
+  if(!name){ alert('子任务名称不能为空'); return; }
+  if(editingSubtaskId){ 
+      if(editor) editor.hide(); 
+      return; 
+  } 
+  const form = new URLSearchParams();
+  form.set('subtask_name', name);
+  form.set('description', desc);
+  const r = await fetchJSON(`${apiBase}/tasks/${taskId}/subtasks/create/`, { method:'POST', body:form, headers:{}});
+  if(r.success){ MobileUI.toast('已创建'); if(editor) editor.hide(); loadSubtasks(); } else { MobileUI.toast(r.message||'创建失败'); }
+}
+
+async function removeSubtask(id){
+  if(!confirm('确认删除该子任务？')) return;
+  const r = await fetchJSON(`${apiBase}/tasks/${taskId}/subtasks/${id}/delete/`, { method:'POST', body:new URLSearchParams() });
+  if(r.success){ MobileUI.toast('已删除'); loadSubtasks(); } else { MobileUI.toast(r.message||'删除失败'); }
+}
+
+async function loadSubtasks(){
+  const r = await fetchJSON(`${apiBase}/tasks/${taskId}/subtasks/`);
+  const box = document.getElementById('subtasks');
+  box.innerHTML='';
+  
+  // 修正进度显示
+  const metaText = document.getElementById('metaArea').textContent || '';
+  const taskStatus = metaText.includes('已完成') ? 'COMPLETED' : '';
+  let progress = (typeof r.progress === 'number') ? r.progress : 0;
+  if(taskStatus === 'COMPLETED') progress = 100;
+  
+  const progText = document.getElementById('progressText');
+  const progFill = document.getElementById('progressFill');
+  if(progText) progText.textContent = `${progress}%`;
+  if(progFill) progFill.style.width = `${progress}%`;
+  
+  const list = r.subtasks || [];
+  if(!r.success || list.length===0){ box.innerHTML='<div class="text-center text-muted py-3 small">暂无子任务</div>'; return; }
+  
+  list.forEach(s=>{
+    const d=document.createElement('div');
+    d.className=`subtask-item ${s.status==='COMPLETED'?'st-completed':''}`;
+    const iconClass = s.status==='COMPLETED' ? 'fas fa-check-circle checked' : 'far fa-circle';
+    
+    d.innerHTML = `
+      <i class="st-check ${iconClass}" data-act="toggle" data-id="${s.subtask_id}"></i>
+      <div class="st-content">
+        <div class="st-name">${esc(s.subtask_name)}</div>
+        <div class="st-desc">${esc(s.description||'')}</div>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-link p-0 text-danger" style="font-size:12px;" data-act="del" data-id="${s.subtask_id}"><i class="fas fa-trash"></i></button>
+      </div>`;
+      
+    // 绑定点击事件
+    const toggleIcon = d.querySelector('[data-act="toggle"]');
+    if(toggleIcon && s.status !== 'COMPLETED') {
+        toggleIcon.onclick = () => completeSubtask(s.subtask_id);
+    }
+    const delBtn = d.querySelector('[data-act="del"]');
+    if(delBtn) delBtn.onclick=()=>removeSubtask(s.subtask_id);
+    box.appendChild(d);
+  });
+}
+
+async function completeSubtask(id){
+  const form = new URLSearchParams();
+  form.set('status','COMPLETED');
+  const r = await fetchJSON(`${apiBase}/tasks/${taskId}/subtasks/${id}/update/`, { method:'POST', body:form, headers:{}});
+  if(r.success){ MobileUI.toast('子任务完成'); loadSubtasks(); } else { MobileUI.toast(r.message||'操作失败'); }
+}
+
+// 初始化
+window.onload = function() {
+  // 延迟初始化 Modal，确保 Bootstrap 已加载
+  try { editor = new bootstrap.Modal('#subtaskEditor'); } catch(e){}
+
+  document.getElementById('addSubtaskBtn').onclick = ()=> openEditor(null);
+  document.getElementById('saveSubtaskBtn').onclick = saveSubtask;
+  
+  // 并行加载任务和子任务，但子任务的进度显示依赖任务状态，所以最好串行或独立处理
+  loadTask().then(() => {
+      loadSubtasks();
+  });
+  
+  MobileUI.fadeIn('body');
+  MobileUI.bindNavFade('body');
+};
+</script>
+{% include 'mobile_nav.html' %}
+</body>
+</html>

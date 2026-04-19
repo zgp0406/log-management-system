@@ -1,0 +1,172 @@
+<!-- FILE: mobile_task_notifications_page.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>消息通知</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+  :root {
+    --bg-body: #F5F7FA;
+    --primary-color: #4F46E5;
+  }
+  body { background: var(--bg-body); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding-bottom: 80px; }
+  
+  /* 顶部栏 */
+  .header {
+    background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);
+    position: sticky; top: 0; z-index: 100;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .page-title { font-weight: 800; font-size: 20px; color: #1E293B; }
+  
+  /* 通知卡片 */
+  .noti-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.02);
+    position: relative;
+    transition: transform 0.2s;
+  }
+  .noti-card:active { transform: scale(0.98); background: #F8FAFC; }
+  
+  /* 未读红点 */
+  .noti-card.unread::before {
+    content: ''; position: absolute; left: 12px; top: 18px;
+    width: 8px; height: 8px; background: #EF4444; border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+  }
+  .noti-card.unread { padding-left: 28px; background: #fff; }
+  
+  .noti-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .noti-type { font-size: 14px; font-weight: 700; color: #334155; }
+  .noti-time { font-size: 12px; color: #94A3B8; }
+  .noti-body { font-size: 14px; color: #475569; line-height: 1.5; }
+  
+  .noti-footer {
+    display: flex; justify-content: flex-end; margin-top: 8px;
+  }
+
+  .badge-task { 
+    background: #EEF2FF; color: #4F46E5; font-size: 11px; padding: 2px 6px; 
+    border-radius: 4px; vertical-align: middle; margin-left: 6px; 
+  }
+
+  .btn-mark-read {
+    font-size: 12px; color: #4F46E5; background: none; border: 1px solid #EEF2FF; padding: 4px 12px;
+    font-weight: 600; border-radius: 20px;
+  }
+  .btn-mark-read:active { background: #EEF2FF; }
+  
+  /* 动画 */
+  .slide-in { animation: slideIn 0.3s ease forwards; opacity: 0; transform: translateY(10px); }
+  @keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+{% include 'mobile_ui.html' %}
+{% include 'mobile_topbar.html' %}
+
+<div class="header" id="pageRoot">
+  <div class="d-flex align-items-center gap-2">
+    <i class="fas fa-bell text-primary"></i>
+    <span class="page-title">消息中心</span>
+  </div>
+  <button id="readAllBtn" class="btn btn-light text-primary btn-sm rounded-pill fw-bold px-3">
+    <i class="fas fa-check-double me-1"></i>全部已读
+  </button>
+</div>
+
+<div class="container py-3">
+  <div id="listBox">
+    <!-- List -->
+  </div>
+  <div class="text-center text-muted py-5 d-none" id="empty">
+    <div class="mb-3"><i class="far fa-bell-slash fa-3x" style="opacity:0.2"></i></div>
+    <div>暂无新通知</div>
+  </div>
+</div>
+
+{% include 'mobile_nav.html' %}
+<script>
+async function fetchJSON(url, options={}){
+  const r = await fetch(url, Object.assign({ credentials:'include', headers:{'Accept':'application/json','Content-Type':'application/json'} }, options));
+  try{ return await r.json(); }catch(e){ return {}; }
+}
+
+function esc(s){ return (s||'').replace(/</g,'&lt;'); }
+
+async function loadNotis(){
+  const box = document.getElementById('listBox');
+  const empty = document.getElementById('empty');
+  
+  const res = await fetchJSON('/tasks/notifications/');
+  box.innerHTML = '';
+  
+  if(!res.success || !res.notifications || res.notifications.length === 0){ 
+      empty.classList.remove('d-none');
+      return; 
+  }
+  empty.classList.add('d-none');
+  
+  const arr = res.notifications || [];
+  arr.forEach((n, idx) => {
+    const d = document.createElement('div');
+    d.className = `noti-card ${n.is_read ? '' : 'unread'} slide-in`;
+    d.style.animationDelay = (idx * 0.05) + 's';
+    
+    d.innerHTML = `
+      <div class="noti-header">
+        <div class="noti-type">
+            ${esc(n.notification_type)}
+            ${n.task_id ? `<span class="badge-task">#${n.task_id}</span>` : ''}
+        </div>
+        <div class="noti-time">${esc(n.created_time)}</div>
+      </div>
+      <div class="noti-body">
+         ${n.task_name ? `<div class="fw-bold mb-1">${esc(n.task_name)}</div>` : ''}
+         <div>${esc(n.message||'')}</div>
+      </div>
+      ${!n.is_read ? `<div class="noti-footer"><button class="btn-mark-read" data-act="read" data-id="${n.notification_id}">标记已读</button></div>` : ''}
+    `;
+    const btn = d.querySelector('[data-act="read"]');
+    if(btn){ btn.onclick = (e)=> { e.stopPropagation(); markRead(n.notification_id); } }
+    
+    // 点击卡片也可跳转任务
+    if(n.task_id){
+        d.onclick = () => {
+             if(!n.is_read) markRead(n.notification_id); // 点击即读
+             location.href = `/m/tasks/${n.task_id}/`;
+        }
+    }
+    box.appendChild(d);
+  });
+}
+
+async function markRead(id){
+  const res = await fetchJSON(`/tasks/notifications/${id}/read/`, { method:'POST', body:'{}' });
+  if(res.success){ MobileUI.toast('已读'); loadNotis(); }
+}
+
+async function readAll(){
+  if(!confirm('确定将所有消息标记为已读？')) return;
+  const res = await fetchJSON('/tasks/notifications/read_all/', { method:'POST', body:'{}' });
+  if(res.success){ MobileUI.toast('全部已读'); loadNotis(); }
+}
+
+(function init(){
+  document.getElementById('readAllBtn').onclick = readAll;
+  loadNotis();
+  MobileUI.fadeIn('#pageRoot');
+  MobileUI.bindNavFade('#pageRoot');
+})();
+</script>
+</body>
+</html>

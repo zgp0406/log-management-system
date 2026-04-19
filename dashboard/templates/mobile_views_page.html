@@ -1,0 +1,763 @@
+<!-- FILE: mobile_views_page.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>工作视图</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    :root {
+      /* 改为纯蓝色渐变 */
+      --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      --success-gradient: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      --warning-gradient: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      --bg-body: #F3F4F6;
+      --glass-bg: rgba(255, 255, 255, 0.85);
+      --border-color: rgba(0,0,0,0.06);
+    }
+    
+    body { 
+        background-color: var(--bg-body);
+        /* 氛围背景改为蓝色系 */
+        background-image: radial-gradient(circle at 50% 0%, #dbeafe 0%, #f3f4f6 50%);
+        background-attachment: fixed;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; 
+        padding-bottom: 90px; 
+        -webkit-tap-highlight-color: transparent; 
+        color: #1F2937;
+    }
+
+    /* 顶部控制栏 (玻璃拟态) */
+    .top-controls {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      padding: 12px 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+    }
+    
+    /* 视图切换 Tabs */
+    .view-tabs {
+      background: rgba(0,0,0,0.04);
+      padding: 4px;
+      border-radius: 12px;
+      display: flex;
+      margin-bottom: 12px;
+    }
+    .view-tabs .btn {
+      border: none;
+      border-radius: 9px;
+      font-size: 13px;
+      padding: 8px 0;
+      color: #6B7280;
+      font-weight: 600;
+      flex: 1;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    .view-tabs .btn.active {
+      background: #fff;
+      color: #111827;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    /* 日期导航 */
+    .date-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+    }
+    .current-date-display {
+      /* 原样式已弃用，保留是为了兼容性或直接删除 */
+      display: none;
+    }
+    .nav-btn {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      border: none;
+      background: #fff;
+      color: #4B5563;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      transition: transform 0.1s;
+    }
+    .nav-btn:active { transform: scale(0.9); }
+
+    /* === 日历网格 (无缝 + 美化) === */
+    .calendar-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: rgba(255,255,255,0.5);
+      backdrop-filter: blur(5px);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 106px; 
+      z-index: 900;
+    }
+    .calendar-header > div {
+      padding: 10px 0;
+      text-align: center;
+      font-size: 12px;
+      color: #9CA3AF;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: var(--border-color);
+      gap: 1px; /* 极细分割线 */
+    }
+
+    .calendar-cell {
+      background: #fff;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      padding: 0;
+      overflow: hidden;
+    }
+    
+    /* 过去/未来的背景微调 */
+    .calendar-cell.future { background: rgba(255,255,255,0.6); } 
+    .calendar-cell.today { background: #fff; }
+
+    .cell-date-header {
+      padding-top: 6px;
+      padding-bottom: 4px;
+      display: flex; justify-content: center; align-items: center;
+      font-size: 13px; font-weight: 600; color: #4B5563; height: 32px;
+    }
+    
+    /* 日期筛选美化 */
+    .date-filter-wrapper {
+      display: flex; align-items: center; gap: 8px;
+      background: #fff;
+      border-radius: 20px;
+      padding: 6px 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      border: 1px solid rgba(0,0,0,0.05);
+      transition: all 0.2s;
+      width: fit-content;
+      position: relative;
+    }
+    .date-filter-wrapper:active { transform: scale(0.98); background: #f8fafc; }
+    .date-input-clean {
+      border: none; background: transparent; outline: none;
+      font-size: 15px; font-weight: 700; color: #1F2937;
+      width: auto; min-width: 120px; text-align: center;
+      font-family: inherit;
+    }
+
+    /* 今天的高亮圆环 */
+    .cell-date-header.today-text span {
+      background: var(--primary-gradient);
+      color: white;
+      border-radius: 50%;
+      width: 26px; height: 26px;
+      line-height: 26px; text-align: center; display: inline-block;
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.4);
+    }
+
+    /* 任务条容器 */
+    .task-bar-container {
+      display: flex; flex-direction: column; gap: 2px; flex: 1; width: 100%; padding-bottom: 6px;
+    }
+
+    /* 任务条 (渐变 + 投影) */
+    .task-bar {
+        display: block;
+        height: 20px; line-height: 20px;
+        padding: 0;
+        font-size: 10px; color: #fff !important; font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        cursor: pointer; position: relative;
+        box-sizing: border-box; overflow: hidden;
+        white-space: nowrap; text-overflow: ellipsis;
+        border-radius: 0; margin: 0;
+        /* 任务条微阴影，增加层次 */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        opacity: 0.95;
+    }
+    /* 仅第一天和完成那天显示文字 */
+    .task-bar-content {
+        padding: 0 6px;
+        overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+        display: flex; align-items: center; height: 100%;
+        visibility: visible; /* 改为默认可见，因为现在我们只在有内容的格子插入HTML */
+    }
+    /* .task-bar.show-text .task-bar-content { visibility: visible; }  <-- 不再需要依赖父类控制可见性 */
+    
+    .task-bar:active { opacity: 0.8; }
+    
+    /* 状态渐变色 */
+    .task-bar.status-todo { background: var(--warning-gradient); }
+    .task-bar.status-paused { background: #9CA3AF; }
+    .task-bar.status-inprogress { background: var(--primary-gradient); } /* Now Blue */
+    .task-bar.status-completed { background: var(--success-gradient); }
+    
+    /* 
+     * 修复文字不显示问题：
+     * 删除下方重复且错误的 display:none 定义
+     * 确保 .task-bar-content 正常显示
+     */
+
+    /* === Timeline (日视图) === */
+    .day-timeline { padding: 20px; }
+    .timeline-item { display: flex; margin-bottom: 24px; position: relative; }
+    /* 连接线 */
+    .timeline-item::before {
+        content: ''; position: absolute; left: 52px; top: 28px; bottom: -24px; 
+        width: 2px; background: #E5E7EB; border-radius: 2px;
+    }
+    .timeline-item:last-child::before { display: none; }
+
+    .timeline-time { 
+        width: 52px; font-size: 13px; color: #6B7280; font-weight: 700; 
+        text-align: right; padding-right: 16px; padding-top: 4px;
+    }
+    .timeline-content {
+      flex: 1; 
+      background: #fff; 
+      border-radius: 16px; 
+      padding: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06); 
+      border: 1px solid rgba(255,255,255,0.8);
+      position: relative;
+    }
+    /* 左侧状态条 */
+    .timeline-content::after {
+        content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 4px; 
+        border-radius: 0 4px 4px 0;
+    }
+    .timeline-content.status-completed::after { background: #10B981; }
+    .timeline-content.status-inprogress::after { background: #3b82f6; } /* Blue */
+    .timeline-content.status-todo::after { background: #F59E0B; }
+    
+    /* Modal 美化 (复用任务/日志页面的弹窗样式) */
+  .modal-dialog-scrollable {
+    height: auto !important; 
+    max-height: 65vh !important; 
+    margin-top: auto !important;
+    margin-bottom: auto !important; 
+  }
+  .modal-content {
+    border-radius: 24px;
+    border: none;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-height: 65vh !important; 
+    overflow: hidden; 
+  }
+  .modal-dialog {
+    margin: 1.75rem; 
+  }
+  .modal-header {
+    padding: 20px 24px 10px 24px;
+    border-bottom: none;
+  }
+  .modal-body {
+    padding: 10px 24px 24px 24px;
+    overflow-y: auto; 
+    scrollbar-width: none; 
+  }
+  .modal-body::-webkit-scrollbar { display: none; }
+  .modal-backdrop.show {
+    opacity: 0.7;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  /* 底部抽屉美化 (保留给其他可能的Offcanvas，但详情改用Modal) */
+    .offcanvas-bottom { 
+        border-radius: 24px 24px 0 0; 
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+    }
+    .offcanvas-header { padding: 20px 24px; }
+    .offcanvas-title { font-weight: 800; font-size: 18px; }
+
+    /* 空状态 */
+    .empty-state { text-align: center; padding: 60px 0; color: #9CA3AF; }
+    .empty-state i { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+  </style>
+</head>
+<body>
+  {% include 'mobile_ui.html' %}
+  {% if request.GET.embed != '1' %}{% include 'mobile_topbar.html' %}{% endif %}
+
+  <!-- 顶部吸顶区域 -->
+  <div class="top-controls">
+    <div class="view-tabs">
+      <button class="btn active" id="tabDay" onclick="switchView('day')">日视图</button>
+      <button class="btn" id="tabWeek" onclick="switchView('week')">周视图</button>
+      <button class="btn" id="tabMonth" onclick="switchView('month')">月视图</button>
+    </div>
+    
+    <div class="date-nav">
+      <button class="nav-btn" onclick="changeDate(-1)"><i class="fas fa-chevron-left"></i></button>
+      
+      <!-- 新版日期筛选 -->
+      <div class="date-filter-wrapper" onclick="openDatePicker()">
+           <i class="far fa-calendar-alt text-primary"></i>
+           <div class="date-input-clean" id="currentDateText">...</div>
+           <input type="date" id="datePicker" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; z-index:10;" onchange="onDatePicked(this)">
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-sm btn-dark rounded-pill px-3 shadow-sm" onclick="goToday()" style="font-size: 12px; background: #1F2937; border:none;">今天</button>
+        <button class="nav-btn" onclick="changeDate(1)"><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mobileCalendarContent" style="min-height: 60vh; margin-top: 0;">
+    <!-- JS Render Content -->
+  </div>
+
+  <!-- 某天任务列表弹窗 (改为居中 Modal) -->
+  <div class="modal fade" id="dayTasksModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="modalDateTitle">详情</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-0" id="modalBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 任务详情弹窗 (改为居中 Modal) -->
+  <div class="modal fade" id="taskDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="taskDetailTitle">任务详情</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="taskDetailBody"></div>
+      </div>
+    </div>
+  </div>
+
+  {% if request.GET.embed != '1' %}{% include 'mobile_nav.html' %}{% endif %}
+
+  <!-- 这里的 JS 逻辑与之前“无缝版”完全一致，无需修改，直接保留即可 -->
+  <script>
+    let currentView = 'day';
+    let currentDate = new Date();
+    let allTasksCache = [];
+    let targetEmployeeId = null;
+
+    document.addEventListener('DOMContentLoaded', function(){
+      const params = new URLSearchParams(window.location.search);
+      const eid = params.get('employee_id');
+      targetEmployeeId = eid ? String(eid) : null;
+      window.readOnlyMode = (params.get('embed') === '1') && !!targetEmployeeId;
+      updateDateText();
+      loadData();
+    });
+
+    function formatDate(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth()+1).padStart(2,'0');
+      const d = String(date.getDate()).padStart(2,'0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function switchView(view) {
+      currentView = view;
+      document.querySelectorAll('.view-tabs .btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(view === 'day' ? 'tabDay' : (view === 'week' ? 'tabWeek' : 'tabMonth')).classList.add('active');
+      updateDateText();
+      loadData();
+    }
+
+    function changeDate(delta) {
+      const today = new Date(); today.setHours(0,0,0,0);
+      let nextDate = new Date(currentDate);
+      if (currentView === 'day') nextDate.setDate(nextDate.getDate() + delta);
+      else if (currentView === 'week') nextDate.setDate(nextDate.getDate() + (delta * 7));
+      else nextDate.setMonth(nextDate.getMonth() + delta);
+
+      if (currentView === 'month') {
+        const nextMonthFirst = new Date(nextDate.getFullYear(), nextDate.getMonth(), 1);
+        if (nextMonthFirst > today) { MobileUI.toast('无法查看未来的视图'); return; }
+      } else {
+        const checkDate = new Date(nextDate); checkDate.setHours(0,0,0,0);
+        if (checkDate > today) { MobileUI.toast('无法查看未来的视图'); return; }
+      }
+
+      currentDate = nextDate;
+      updateDateText();
+      loadData();
+    }
+
+    function goToday() { currentDate = new Date(); updateDateText(); loadData(); }
+
+    function updateDateText() {
+      const el = document.getElementById('currentDateText');
+      const picker = document.getElementById('datePicker');
+      if(picker) picker.value = formatDate(currentDate);
+      
+      if (currentView === 'day') {
+        el.textContent = currentDate.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' });
+      } else if (currentView === 'week') {
+        const s = new Date(currentDate); s.setDate(s.getDate() - s.getDay());
+        const e = new Date(s); e.setDate(e.getDate() + 6);
+        el.textContent = `${s.getMonth()+1}月${s.getDate()}日 - ${e.getMonth()+1}月${e.getDate()}日`;
+      } else {
+        el.textContent = currentDate.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' });
+      }
+    }
+
+    function openDatePicker() {
+       const p = document.getElementById('datePicker');
+       if(p) { p.value = formatDate(currentDate); try{p.showPicker();}catch(e){p.click();} }
+    }
+
+    function onDatePicked(input) {
+        if(input.value) {
+            const parts = input.value.split('-');
+            currentDate = new Date(parts[0], parts[1]-1, parts[2]);
+            updateDateText();
+            loadData();
+        }
+    }
+
+    async function loadData() {
+      const container = document.getElementById('mobileCalendarContent');
+      container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary spinner-border-sm"></div></div>';
+      const url = `/views/calendar/?view_type=${currentView}&date=${formatDate(currentDate)}${targetEmployeeId?`&employee_id=${encodeURIComponent(targetEmployeeId)}`:''}`;
+      try {
+        const res = await fetch(url);
+        const json = await res.json();
+        if (json.code === 200) {
+            allTasksCache = json.data.tasks || [];
+            if (currentView === 'month' && allTasksCache.length === 0 && json.data.days_grid) {
+                const taskMap = new Map();
+                json.data.days_grid.forEach(w => w.forEach(d => {
+                    if(d.tasks) d.tasks.forEach(t => taskMap.set(t.id, t));
+                }));
+                allTasksCache = Array.from(taskMap.values());
+            }
+            render();
+        } else { container.innerHTML = `<div class="empty-state">加载失败</div>`; }
+      } catch (e) { console.error(e); container.innerHTML = `<div class="empty-state">网络错误</div>`; }
+    }
+
+    function render() {
+      const container = document.getElementById('mobileCalendarContent');
+      container.innerHTML = '';
+      if (currentView === 'day') renderDayTimeline(container);
+      else if (currentView === 'week') renderGrid(container, 'week');
+      else renderGrid(container, 'month');
+    }
+
+    function renderDayTimeline(container) {
+      const todayTasks = allTasksCache || [];
+      if (todayTasks.length === 0) {
+        container.innerHTML = `<div class="empty-state"><i class="far fa-calendar-check"></i><p>暂无任务</p></div>`;
+        return;
+      }
+      
+      // 当前视图的日期（用于判断是否为完成日）
+      const viewDateStr = formatDate(currentDate);
+
+      const timeline = document.createElement('div'); timeline.className = 'day-timeline';
+      todayTasks.forEach(t => {
+        let statusClass = 'status-todo';
+        let statusText = '未接取';
+        let badgeClass = 'bg-light text-dark border'; // Default
+
+        if (t.status === 'IN_PROGRESS') {
+            statusClass = 'status-inprogress';
+            statusText = '进行中';
+            badgeClass = 'bg-primary bg-opacity-10 text-primary border-0';
+        } else if (t.status === 'COMPLETED') {
+            // 关键逻辑：如果任务已完成，但完成日期在视图日期之后，则在视图日期显示为“进行中”
+            let isCompletedToday = true;
+            if (t.completion_time) {
+                const cDate = t.completion_time.split('T')[0];
+                if (cDate > viewDateStr) {
+                    isCompletedToday = false;
+                }
+            }
+
+            if (isCompletedToday) {
+                statusClass = 'status-completed';
+                statusText = '已完成';
+                badgeClass = 'bg-success bg-opacity-10 text-success border-0';
+            } else {
+                // 显示为进行中，但标注（已完成）
+                statusClass = 'status-inprogress';
+                statusText = '进行中 (已完成)';
+                badgeClass = 'bg-primary bg-opacity-10 text-primary border-0';
+            }
+        }
+
+        const timeStr = t.start_time ? new Date(t.start_time).toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'}) : '全天';
+        const item = document.createElement('div'); item.className = 'timeline-item';
+        const onClickAttr = (window.readOnlyMode ? '' : ` onclick="openTaskDetail(${t.task_id||t.id})"`);
+        item.innerHTML = `
+          <div class="timeline-time">${timeStr}</div>
+          <div class="timeline-content ${statusClass}"${onClickAttr}>
+            <div style="font-weight:700; font-size:15px; margin-bottom:6px; color:#1F2937;">${t.task_name}</div>
+            <div style="font-size:12px; color:#6B7280; display:flex; justify-content:space-between; align-items:center;">
+               <span><i class="far fa-clock me-1"></i>${t.estimated_duration||0}分钟</span>
+               <span class="badge ${badgeClass}">${statusText}</span>
+            </div>
+          </div>
+        `;
+        timeline.appendChild(item);
+      });
+      container.appendChild(timeline);
+    }
+
+    function renderGrid(container, type) {
+      const today = new Date(); today.setHours(0,0,0,0);
+      const DAY_MS = 24*60*60*1000;
+      const BAR_H = 20, GAP = 2;
+
+      let days = [];
+      if (type === 'week') {
+        const start = new Date(currentDate); const dow = start.getDay(); const mondayOffset = (dow + 6) % 7; start.setDate(start.getDate() - mondayOffset);
+        for (let i=0; i<7; i++) { const d = new Date(start); d.setDate(d.getDate() + i); d.setHours(0,0,0,0); days.push(d); }
+      } else {
+        const year = currentDate.getFullYear(), month = currentDate.getMonth();
+        const start = new Date(year, month, 1); const dow = start.getDay(); const mondayOffset = (dow + 6) % 7; start.setDate(start.getDate() - mondayOffset);
+        for (let i=0; i<42; i++) { const d = new Date(start); d.setDate(d.getDate() + i); d.setHours(0,0,0,0); days.push(d); }
+      }
+
+      const header = document.createElement('div'); header.className = 'calendar-header';
+      ['一','二','三','四','五','六','日'].forEach(d => { const div = document.createElement('div'); div.textContent = d; header.appendChild(div); });
+      container.appendChild(header);
+
+      const grid = document.createElement('div'); grid.className = 'calendar-grid';
+
+      const weeksCount = type === 'week' ? 1 : 6;
+      // 动态计算行高 (基于本周/月内某一天的最大任务数)
+      // 但由于是按周渲染，我们可以在每周内部计算行高
+      
+      for (let w = 0; w < weeksCount; w++) {
+        const weekDays = days.slice(w*7, w*7 + 7);
+        const weekStart = new Date(weekDays[0]); const weekEnd = new Date(weekDays[6]);
+
+        // 如果是月视图，且这一周完全不属于当前月份（只是用来补齐），则不显示
+        if (type === 'month') {
+            const firstDayOfWeek = weekDays[0];
+            const lastDayOfWeek = weekDays[6];
+            // 只要这一周有一天属于当前月，就显示
+            const hasCurrentMonthDay = weekDays.some(d => d.getMonth() === currentDate.getMonth());
+            if (!hasCurrentMonthDay) continue; 
+        }
+
+        const segments = [];
+        (allTasksCache||[]).forEach(t => {
+          if (!t.creation_time) return;
+          const s = new Date(t.creation_time); s.setHours(0,0,0,0);
+          let e; if (t.status==='COMPLETED' && t.completion_time) { e = new Date(t.completion_time); } else { e = new Date(); e.setHours(0,0,0,0); }
+          e.setHours(0,0,0,0);
+          if (e < weekStart || s > weekEnd) return;
+          const startIdx = Math.max(0, Math.floor((s - weekStart)/DAY_MS));
+          const endIdx = Math.min(6, Math.floor((e - weekStart)/DAY_MS));
+          segments.push({ t, startIdx, endIdx });
+        });
+        segments.sort((a,b) => a.startIdx - b.startIdx || a.endIdx - b.endIdx);
+
+        const slotsEnd = [];
+        const dayBars = Array.from({length:7}, () => []);
+        segments.forEach(seg => {
+          let row = 0;
+          while (row < slotsEnd.length && slotsEnd[row] >= seg.startIdx) row++;
+          slotsEnd[row] = seg.endIdx;
+          for (let d = seg.startIdx; d <= seg.endIdx; d++) {
+            // 判断是否是真正的第一天或最后一天（用于显示文字）
+            const currentDayDate = new Date(weekStart); currentDayDate.setDate(currentDayDate.getDate() + d);
+            const tStart = new Date(seg.t.creation_time); tStart.setHours(0,0,0,0);
+            let tEnd; if(seg.t.status==='COMPLETED' && seg.t.completion_time){ tEnd = new Date(seg.t.completion_time); } else { tEnd = new Date(); } tEnd.setHours(0,0,0,0);
+            
+            const isRealStart = currentDayDate.getTime() === tStart.getTime();
+            const isRealEnd = currentDayDate.getTime() === tEnd.getTime();
+            
+            dayBars[d].push({ task: seg.t, row, isStart: d===seg.startIdx, isEnd: d===seg.endIdx, showText: isRealStart || isRealEnd });
+          }
+        });
+        const rowsCount = Math.max(slotsEnd.length, 1); // 至少留一行高度
+
+        weekDays.forEach((day, idx) => {
+          const isToday = day.getTime() === today.getTime();
+          const isFuture = day.getTime() > today.getTime();
+          const isCurrentMonth = type === 'week' || day.getMonth() === currentDate.getMonth();
+
+          const cell = document.createElement('div');
+          cell.className = `calendar-cell ${isToday ? 'today' : ''} ${isFuture ? 'future' : ''}`;
+          
+          // 如果不是当前月份，且是月视图，直接留白或变灰（但根据需求“不显示相邻月份”，我们通常只是变灰或者不渲染任务）
+          // 这里为了保持网格对齐，我们渲染格子但不渲染内容，或者弱化显示
+          if (!isCurrentMonth) {
+              cell.style.backgroundColor = '#f9fafb'; 
+              cell.style.opacity = '0.5';
+          }
+          
+          if (!isFuture && !window.readOnlyMode) cell.onclick = () => showDayDetails(day);
+
+          const head = document.createElement('div'); head.className = `cell-date-header ${isToday ? 'today-text' : ''}`;
+          if (isToday) head.innerHTML = `<span>${day.getDate()}</span>`;
+          else head.textContent = day.getDate();
+          
+          // 非当前月日期文字变淡
+          if (!isCurrentMonth) head.style.color = '#e5e7eb';
+          
+          cell.appendChild(head);
+
+          const barContainer = document.createElement('div'); barContainer.className = 'task-bar-container';
+          barContainer.style.position = 'relative';
+          // 动态高度：根据该周最大任务行数决定
+          barContainer.style.height = `${rowsCount*(BAR_H+GAP)}px`; 
+          barContainer.style.minHeight = '20px';
+
+          // 仅在当前月份的日期显示任务条（符合“只显示每个月”的需求）
+          if (isCurrentMonth || type === 'week') {
+              const barsForDay = dayBars[idx] || [];
+              barsForDay.forEach(info => {
+                const t = info.task;
+                
+                // 状态逻辑
+                let barClass = 'status-todo';
+                if (t.status === 'IN_PROGRESS') barClass = 'status-inprogress';
+                else if (t.status === 'COMPLETED') {
+                    if (t.completion_time) {
+                       const cTime = new Date(t.completion_time); cTime.setHours(0,0,0,0);
+                       if (day.getTime() < cTime.getTime()) barClass = 'status-inprogress';
+                       else barClass = 'status-completed';
+                    } else {
+                       barClass = 'status-completed';
+                    }
+                }
+                
+                // 是否显示文字
+                if (info.showText) barClass += ' show-text';
+                
+                const a = document.createElement('a');
+                a.className = `task-bar ${barClass}`;
+                a.style.position = 'absolute';
+                a.style.left = '0px'; a.style.right = '0px';
+                a.style.top = `${info.row*(BAR_H+GAP)}px`;
+                a.style.height = `${BAR_H}px`;
+                
+                if (info.isStart && (t.status!=='COMPLETED' || t.completion_time)) a.style.borderRadius = '4px 0 0 4px';
+                else if (info.isEnd) a.style.borderRadius = '0 4px 4px 0';
+                else a.style.borderRadius = '0';
+                
+                // 始终注入内容，通过 CSS visibility 控制显示
+                // 如果是第一天或最后一天（有文字显示），则注入内容；否则留空，保持布局
+                if (info.showText) {
+                     a.innerHTML = `<div class="task-bar-content">${t.task_name}</div>`;
+                } else {
+                     a.innerHTML = ``; 
+                } 
+                
+                if (window.readOnlyMode) {
+                  a.removeAttribute('href');
+                  a.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); };
+                  a.style.pointerEvents = 'auto';
+                } else {
+                  a.removeAttribute('href');
+                  a.onclick = ev => { ev.stopPropagation(); openTaskDetail(t.id||t.task_id); };
+                  a.style.pointerEvents = 'auto';
+                }
+                barContainer.appendChild(a);
+              });
+          }
+          cell.appendChild(barContainer);
+          grid.appendChild(cell);
+        });
+      }
+      container.appendChild(grid);
+    }
+
+    function showDayDetails(date) {
+      const titleEl = document.getElementById('modalDateTitle');
+      const bodyEl = document.getElementById('modalBody');
+      const bsModal = new bootstrap.Modal(document.getElementById('dayTasksModal'));
+      titleEl.textContent = date.toLocaleDateString('zh-CN', {month:'long', day:'numeric', weekday:'long'});
+      
+      const dayStart = new Date(date); dayStart.setHours(0,0,0,0);
+      const dayEnd = new Date(date); dayEnd.setHours(0,0,0,0);
+      const list = allTasksCache.filter(t => {
+        if (!t.creation_time) return false;
+        const s = new Date(t.creation_time); s.setHours(0,0,0,0);
+        let e; if (t.status === 'COMPLETED' && t.completion_time) e = new Date(t.completion_time); else e = new Date(); e.setHours(0,0,0,0);
+        return s <= dayEnd && e >= dayStart;
+      });
+
+      if (list.length === 0) {
+        bodyEl.innerHTML = `<div class="p-5 text-center text-muted">无任务</div>`;
+      } else {
+        bodyEl.innerHTML = `<div class="list-group list-group-flush">` + list.map(t => {
+          const statusText = t.status === 'COMPLETED' ? '已完成' : (t.status === 'IN_PROGRESS' ? '进行中' : '未接取');
+          const badgeClass = t.status === 'COMPLETED' ? 'bg-success' : (t.status === 'IN_PROGRESS' ? 'bg-primary' : 'bg-warning text-dark');
+          return `
+            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 border-bottom" onclick="${window.readOnlyMode ? '' : 'openTaskDetail(' + (t.id||t.task_id) + ')'}">
+              <div>
+                <div class="fw-bold text-dark mb-1" style="font-size:15px;">${t.task_name}</div>
+                <div class="small text-muted">开始: ${t.creation_time.split('T')[0]}</div>
+              </div>
+              <span class="badge ${badgeClass}">${statusText}</span>
+            </div>
+          `;
+        }).join('') + `</div>`;
+      }
+      bsModal.show();
+    }
+
+    async function openTaskDetail(id){
+      if(window.readOnlyMode) return;
+      try{
+        const r = await fetch(`/tasks/${id}/`, { credentials:'include' });
+        const d = await r.json();
+        const oc = document.getElementById('taskDetailModal');
+        const titleEl = document.getElementById('taskDetailTitle');
+        const bodyEl = document.getElementById('taskDetailBody');
+        titleEl.textContent = d.task_name || '任务详情';
+        
+        const priMap = { HIGH:'高', MEDIUM:'中', LOW:'低' };
+        const statusMap = { COMPLETED:'已完成', IN_PROGRESS:'进行中', TO_DO:'未接取' };
+        
+        const rows = [];
+        rows.push(`<div class="mb-3"><span class="badge bg-dark me-2">${priMap[d.priority]||d.priority}优先级</span><span class="badge bg-secondary">${statusMap[d.status]||d.status}</span></div>`);
+        rows.push(`<div class="p-3 bg-light rounded mb-3" style="font-size:14px; line-height:1.6;">${(d.description||'无描述').replace(/</g,'&lt;')}</div>`);
+        
+        rows.push(`<div class="row g-2 text-muted small mb-3">
+          <div class="col-6"><i class="fas fa-user me-1"></i> 创建: ${d.creator||'-'}</div>
+          <div class="col-6"><i class="fas fa-user-check me-1"></i> 执行: ${d.assignee||'-'}</div>
+          <div class="col-6"><i class="far fa-clock me-1"></i> 预计: ${d.estimated_duration||0}分</div>
+          <div class="col-6"><i class="far fa-calendar me-1"></i> 开始: ${d.start_time||'-'}</div>
+        </div>`);
+
+        if(d.attachment_url){ rows.push(`<div class="mt-3"><a class="btn btn-outline-primary w-100 rounded-pill" target="_blank" href="${d.attachment_url}"><i class="fas fa-paperclip me-2"></i>查看附件</a></div>`); }
+        bodyEl.innerHTML = rows.join('');
+        new bootstrap.Modal(oc).show();
+      }catch(e){ MobileUI.toast('加载失败'); }
+    }
+  </script>
+
+  <div class="offcanvas offcanvas-bottom d-none" tabindex="-1" id="taskDetailOffcanvas">
+    <div class="offcanvas-header border-bottom">
+      <h5 class="offcanvas-title fw-bold" id="taskDetailTitleOffcanvas">任务详情</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-4" id="taskDetailBodyOffcanvas"></div>
+  </div>
+</body>
+</html>

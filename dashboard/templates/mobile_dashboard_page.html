@@ -1,0 +1,797 @@
+<!-- FILE: mobile_dashboard_page.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<style>
+  :root {
+    --primary-gradient: linear-gradient(135deg, #0062cc 0%, #004a99 100%); /* 深蓝渐变 */
+    --bg-body: #f4f6f9;
+    --card-shadow: 0 8px 24px rgba(0, 86, 179, 0.08); /* 蓝色系微投影 */
+    --card-border: 1px solid rgba(0,0,0,0.05);
+    --anim-delay: 0.1s;
+  }
+
+  body {
+    background-color: var(--bg-body);
+    /* 移除原有径向渐变，改用统一的极淡蓝灰渐变 */
+    background-image: linear-gradient(180deg, #e9ecef 0%, #f4f6f9 300px);
+    background-attachment: fixed;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    padding-bottom: 100px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* 动画定义 */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-in {
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+  }
+
+  /* 头部区域 - 极简商务风 */
+  .dashboard-header {
+    padding: 24px 24px 12px 24px;
+    margin-bottom: 4px;
+    padding-top: max(24px, env(safe-area-inset-top));
+    background: transparent;
+  }
+  .greet-text {
+    font-size: 26px;
+    font-weight: 800;
+    color: #0d2137; /* 深色文字 */
+    margin-bottom: 4px;
+    letter-spacing: -0.5px;
+  }
+  .date-text {
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* 卡片通用样式 */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.95); /* 提高不透明度 */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 16px; /* 统一圆角 */
+    border: var(--card-border);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  /* KPI 区域 */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .kpi-item {
+    background: #fff;
+    padding: 16px;
+    border-radius: 16px;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    border: 1px solid rgba(0,0,0,0.03);
+    transition: transform 0.2s;
+  }
+  .kpi-item:active { transform: scale(0.98); }
+  
+  .kpi-icon-box {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  /* KPI 配色调整为更商务的色调 */
+  .kpi-bg-1 { background: #e7f1ff; color: #0056b3; } /* 蓝 */
+  .kpi-bg-2 { background: #e6fffa; color: #008f75; } /* 青绿 */
+  .kpi-bg-3 { background: #fff4e6; color: #d9480f; } /* 橙 */
+  .kpi-bg-4 { background: #f3f0ff; color: #5f3dc4; } /* 紫 */
+
+  .kpi-label { font-size: 13px; color: #6c757d; font-weight: 600; }
+  .kpi-value { font-size: 24px; font-weight: 800; color: #212529; line-height: 1.1; margin-top: 4px; }
+
+  /* 标题栏 */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(0,0,0,0.03);
+  }
+  .section-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1F2937;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* 任务列表 */
+  .task-list { padding: 8px 16px; }
+  .task-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1px solid #F3F4F6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s;
+  }
+  .task-card:last-child { margin-bottom: 8px; }
+  .task-card:active { background: #F9FAFB; transform: scale(0.99); }
+  
+  .task-main { flex: 1; min-width: 0; margin-right: 12px; }
+  .task-title { 
+    font-size: 15px; font-weight: 600; color: #374151; 
+    margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+  }
+  .task-sub { font-size: 12px; color: #9CA3AF; }
+  
+  /* 优先级胶囊 */
+  .tag-pill {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .tag-high { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+  .tag-med { background: #FFFBEB; color: #D97706; border: 1px solid #FDE68A; }
+  .tag-low { background: #F3F4F6; color: #6B7280; border: 1px solid #E5E7EB; }
+
+  /* 通知横幅 */
+  .noti-banner {
+    background: #0056b3; /* 纯深蓝 */
+    border-radius: 16px;
+    padding: 16px;
+    color: white;
+    box-shadow: 0 8px 20px -6px rgba(0, 86, 179, 0.4);
+    border: none;
+    margin-bottom: 24px;
+  }
+
+  /* 日志 */
+  .log-item {
+    position: relative;
+    padding-left: 16px;
+    margin-bottom: 16px;
+    border-left: 2px solid #E5E7EB;
+  }
+  .log-item::before {
+    content: ''; position: absolute; left: -5px; top: 6px;
+    width: 8px; height: 8px; border-radius: 50%; background: #9CA3AF;
+  }
+  .log-time { font-size: 12px; color: #9CA3AF; margin-bottom: 2px; }
+  .log-content { font-size: 14px; color: #4B5563; line-height: 1.5; }
+  
+  /* 骨架屏 */
+  .skeleton { background: #E5E7EB; border-radius: 6px; position: relative; overflow: hidden; }
+  .skeleton::after {
+    content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+  /* Modal 美化 */
+  .modal-dialog-scrollable {
+    height: auto !important; /* 不强制占满高度 */
+    max-height: 65vh !important; /* 限制整个弹窗（含Header/Footer）的最大高度 */
+    margin-top: auto !important;
+    margin-bottom: auto !important; /* 垂直居中 */
+  }
+  .modal-content {
+    border-radius: 24px;
+    border: none;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-height: 65vh !important; /* 限制内容区域最大高度 */
+    overflow: hidden; /* 防止溢出圆角 */
+  }
+  .modal-dialog {
+    margin: 1.75rem; 
+  }
+  .modal-header {
+    padding: 20px 24px 10px 24px;
+  }
+  .modal-body {
+    padding: 10px 24px 24px 24px;
+    overflow-y: auto; /* 确保内容可滚动 */
+    scrollbar-width: none; /* Firefox 隐藏滚动条 */
+  }
+  .modal-body::-webkit-scrollbar { display: none; /* Chrome/Safari 隐藏滚动条 */ }
+  .modal-footer {
+    border-top: none;
+    padding: 0 24px 24px 24px; /* 底部留白 */
+  }
+  .modal-backdrop.show {
+    opacity: 0.7;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+</style>
+</head>
+<body>
+{% include 'mobile_ui.html' %}
+{% include 'mobile_topbar.html' %}
+
+<div class="fade-target" id="pageRoot">
+  
+  <!-- Header -->
+  <div class="dashboard-header animate-in">
+    <div class="greet-text" id="greet">Hello</div>
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="date-text">
+         <span id="dateText" style="display:none;">Loading...</span>
+         <input id="dateInput" type="date" class="form-control form-control-sm d-none">
+      </div>
+      <div id="lastUpdated" style="font-size:11px; color:#9CA3AF; opacity:0.8;">更新中...</div>
+    </div>
+  </div>
+
+  <div class="container px-3">
+    
+    <!-- KPI 区域 -->
+    <div class="kpi-grid animate-in" style="animation-delay: 0.1s;">
+      <div class="kpi-item">
+        <div class="kpi-icon-box kpi-bg-1"><i class="fas fa-list-ul"></i></div>
+        <div class="kpi-label">今日任务</div>
+        <div class="kpi-value" id="kpiToday">-</div>
+      </div>
+      <div class="kpi-item">
+        <div class="kpi-icon-box kpi-bg-2"><i class="fas fa-spinner"></i></div>
+        <div class="kpi-label">进行中</div>
+        <div class="kpi-value" id="kpiDoing">-</div>
+      </div>
+      <div class="kpi-item">
+        <div class="kpi-icon-box kpi-bg-3"><i class="far fa-clock"></i></div>
+        <div class="kpi-label">待处理</div>
+        <div class="kpi-value" id="kpiTodo">-</div>
+      </div>
+      <div class="kpi-item">
+        <div class="kpi-icon-box kpi-bg-4"><i class="fas fa-check"></i></div>
+        <div class="kpi-label">已完成</div>
+        <div class="kpi-value" id="kpiDone">-</div>
+      </div>
+    </div>
+
+    <!-- 通知区域 -->
+    <div class="animate-in" style="animation-delay: 0.2s; display:none;" id="notiCard">
+      <div class="noti-banner d-flex justify-content-between align-items-center">
+        <div>
+          <div style="font-weight:700; font-size:15px; margin-bottom:2px;"><i class="fas fa-bell me-2"></i>新通知</div>
+          <div style="font-size:12px; opacity:0.9;">你有 <span id="unreadNum" style="font-weight:800; text-decoration:underline;">0</span> 条未读消息</div>
+        </div>
+        <a href="/m/notifications/" class="btn btn-sm btn-light text-primary rounded-pill px-3 shadow-sm" style="font-weight:600; font-size:12px;">查看</a>
+      </div>
+    </div>
+
+    <!-- 系统公告 -->
+    <div class="glass-card animate-in" style="animation-delay: 0.25s;">
+      <div class="section-header">
+        <div class="section-title"><i class="fas fa-bullhorn text-warning"></i> 系统公告</div>
+        <button class="btn btn-sm btn-light text-primary rounded-pill d-none" id="btnAddAnnouncement" style="font-size:12px; font-weight:600;">发布</button>
+      </div>
+      <div class="task-list" id="announcements" style="max-height: 280px; overflow:auto;">
+        <!-- Skeleton -->
+        <div class="task-card"><div class="skeleton" style="width:100%; height:20px;"></div></div>
+        <div class="task-card"><div class="skeleton" style="width:80%; height:20px;"></div></div>
+      </div>
+    </div>
+
+    <!-- 公司十大任务 -->
+    <div class="glass-card animate-in" style="animation-delay: 0.3s;">
+      <div class="section-header">
+        <div class="section-title"><i class="fas fa-crown text-warning"></i> 公司十大任务</div>
+        <button class="btn btn-sm btn-light text-primary rounded-pill d-none" id="btnEditCompany" style="font-size:12px; font-weight:600;">编辑</button>
+      </div>
+      <div class="task-list" id="companyTasks" style="max-height: 280px; overflow:auto;">
+        <!-- Skeleton -->
+        <div class="task-card"><div class="skeleton" style="width:100%; height:20px;"></div></div>
+        <div class="task-card"><div class="skeleton" style="width:80%; height:20px;"></div></div>
+      </div>
+    </div>
+
+    <!-- 个人十大事项 -->
+    <div class="glass-card animate-in" style="animation-delay: 0.4s;">
+      <div class="section-header">
+        <div class="section-title"><i class="fas fa-user-astronaut text-primary"></i> 个人十大事项</div>
+        <button class="btn btn-sm btn-light text-primary rounded-pill" id="btnEditPersonal" style="font-size:12px; font-weight:600;">编辑</button>
+      </div>
+      <div class="task-list" id="personalTasks" style="max-height: 280px; overflow:auto;">
+        <div class="task-card"><div class="skeleton" style="width:100%; height:20px;"></div></div>
+      </div>
+    </div>
+
+    <!-- 派发任务 -->
+    <div class="glass-card animate-in" style="animation-delay: 0.5s;">
+      <div class="section-header">
+        <div class="section-title"><i class="fas fa-paper-plane text-info"></i> 公司派发任务</div>
+      </div>
+      <div class="task-list" id="assignedTasks" style="max-height: 280px; overflow:auto;">
+        <div class="text-center text-muted py-3 small">加载中...</div>
+      </div>
+    </div>
+
+    <!-- 日志 -->
+    <div class="glass-card animate-in mb-5" style="animation-delay: 0.6s;">
+      <div class="section-header">
+        <div class="section-title"><i class="fas fa-pen-nib text-secondary"></i> 今日日志</div>
+        <a href="/logs/" class="btn btn-sm btn-light text-primary rounded-pill" style="font-size:12px; font-weight:600;">写日志</a>
+      </div>
+      <div class="p-3" id="logs">
+         <div class="skeleton" style="width:100%; height:40px;"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% include 'mobile_nav.html' %}
+
+<script>
+async function fetchJSON(url, options={}){
+  const r = await fetch(url, Object.assign({ credentials:'include' }, options));
+  try{
+    const text = await r.text();
+    try{ return JSON.parse(text); }catch(e){ return { success:false, message:'网络错误', status:r.status, raw:text }; }
+  }catch(e){ return { success:false, message:'网络错误' }; }
+}
+
+function renderAnnouncements(el, arr){
+  el.innerHTML = '';
+  if(!arr || arr.length===0){ 
+      el.innerHTML = '<div class="text-center py-4 text-muted" style="font-size:13px; background:#f9fafb; border-radius:12px;">暂无公告</div>'; 
+      return; 
+  }
+  arr.forEach(ann=>{
+    const d = document.createElement('div');
+    d.className='task-card';
+    
+    let pinIcon = ann.is_pinned ? '<i class="fas fa-thumbtack me-2 text-warning"></i>' : '';
+    let priorityClass = 'tag-low';
+    if(ann.priority === 'IMPORTANT') priorityClass = 'tag-med';
+    else if(ann.priority === 'URGENT') priorityClass = 'tag-high';
+
+    d.innerHTML = `
+      <div class="task-main">
+        <div class="task-title">${pinIcon}${ann.title}</div>
+        <div class="task-sub">${ann.created_at} · ${ann.priority_display}</div>
+        <div class="task-sub mt-1" style="white-space: normal; overflow: visible; text-overflow: clip;">${ann.content.substring(0, 50)}${ann.content.length > 50 ? '...' : ''}</div>
+      </div>
+      <div class="tag-pill ${priorityClass}">${ann.priority_display}</div>
+    `;
+    d.onclick = () => {
+        document.getElementById('annModalTitle').textContent = ann.title;
+        document.getElementById('annModalDate').textContent = ann.created_at;
+        document.getElementById('annModalPriority').textContent = ann.priority_display;
+        document.getElementById('annModalContent').textContent = ann.content; // Use textContent for safety or innerHTML if safe
+        
+        const btnDel = document.getElementById('btnDelAnnouncement');
+        if(window.isAdmin){
+            btnDel.classList.remove('d-none');
+            btnDel.onclick = () => deleteAnnouncement(ann.id);
+        } else {
+            btnDel.classList.add('d-none');
+        }
+        
+        new bootstrap.Modal(document.getElementById('announcementModal')).show();
+    };
+    el.appendChild(d);
+  });
+}
+
+function renderTasks(el, arr){
+  el.innerHTML = '';
+  if(!arr || arr.length===0){ 
+      el.innerHTML = '<div class="text-center py-4 text-muted" style="font-size:13px; background:#f9fafb; border-radius:12px;">暂无任务</div>'; 
+      return; 
+  }
+  arr.slice(0,10).forEach(t=>{
+    const d = document.createElement('div');
+    d.className='task-card';
+    
+    let tagClass = 'tag-low';
+    let p = t.priority;
+    if(p === 'HIGH' || p === '高') tagClass = 'tag-high';
+    else if(p === 'MEDIUM' || p === '中') tagClass = 'tag-med';
+
+    d.innerHTML = `
+      <div class="task-main">
+        <div class="task-title">${t.task_name}</div>
+        ${t.status ? `<div class="task-sub">${t.status}</div>` : ''}
+      </div>
+      <div class="tag-pill ${tagClass}">${p||'普通'}</div>
+    `;
+    el.appendChild(d);
+  });
+}
+
+function renderLogs(el, arr){
+  el.innerHTML = '';
+  if(!arr || arr.length===0){ el.innerHTML = '<div class="text-center py-3 text-muted small">暂无日志</div>'; return; }
+  arr.forEach(l=>{
+    const d = document.createElement('div');
+    d.className='log-item';
+    d.innerHTML = `
+      <div class="log-time">${l.log_time.split(' ')[1] || l.log_time}</div>
+      <div class="log-content">${(l.content||'').replace(/</g,'&lt;')}</div>
+    `;
+    el.appendChild(d);
+  });
+}
+
+async function load(){
+  const d = document.getElementById('dateInput').value;
+  const res = await fetchJSON(`/dashboard/api/${d?`?date=${encodeURIComponent(d)}`:''}`);
+  if(!res.success){ return; }
+  const data = res.data;
+  document.getElementById('greet').textContent = `${data.greeting}，${data.current_employee_name || ''}`;
+  document.getElementById('dateText').textContent = `${data.today} · ${data.weekday}`;
+  document.getElementById('dateText').style.display = '';
+  // document.getElementById('dateText').textContent = `${data.today} · ${data.weekday}`;
+  document.getElementById('kpiToday').textContent = data.task_stats.today_total;
+  document.getElementById('kpiDoing').textContent = data.task_stats.in_progress;
+  document.getElementById('kpiTodo').textContent = data.task_stats.pending;
+  document.getElementById('kpiDone').textContent = data.task_stats.completed;
+  
+  renderAnnouncements(document.getElementById('announcements'), data.announcements);
+  renderTasks(document.getElementById('companyTasks'), data.company_tasks);
+  renderTasks(document.getElementById('personalTasks'), data.personal_tasks);
+  renderLogs(document.getElementById('logs'), data.personal_logs);
+  setLastUpdated();
+  
+  try{ if(data.has_admin_or_ceo_access){ document.getElementById('btnEditCompany').classList.remove('d-none'); } }catch(e){}
+  try{ if(data.has_admin_or_ceo_access){ 
+      document.getElementById('btnAddAnnouncement').classList.remove('d-none');
+      window.isAdmin = true;
+  } }catch(e){}
+  
+  try{
+    const pt = await fetchJSON('/dashboard/get_personal_tasks/');
+    const el = document.getElementById('assignedTasks');
+    if(pt && pt.success){
+      el.innerHTML = '';
+      if(!pt.tasks || pt.tasks.length === 0){
+          el.innerHTML = '<div class="text-center py-4 text-muted small">暂无任务</div>';
+      } else {
+          (pt.tasks||[]).slice(0,10).forEach(t=>{
+            const d = document.createElement('div'); d.className='task-card';
+            d.innerHTML = `<div class="task-main"><div class="task-title">${t.task_name}</div></div><div class="badge bg-light text-secondary border">${t.status}</div>`;
+            el.appendChild(d);
+          });
+      }
+    }else{ el.innerHTML = '<div class="text-center py-3 text-muted small">暂无任务</div>'; }
+  }catch(e){ document.getElementById('assignedTasks').innerHTML='<div class="text-center py-3 text-muted small">暂无任务</div>'; }
+  
+  try{
+    const nr = await fetchJSON('/tasks/notifications/');
+    if(nr && nr.success && typeof nr.unread_count === 'number'){
+      if(nr.unread_count > 0){
+        document.getElementById('notiCard').style.display='block';
+        document.getElementById('unreadNum').textContent = nr.unread_count;
+      } else {
+        document.getElementById('notiCard').style.display='none';
+      }
+    }
+  }catch(e){}
+}
+
+function setLastUpdated(){
+  const el = document.getElementById('lastUpdated');
+  const d = new Date();
+  const pad = n=> (n<10?('0'+n):n);
+  el.textContent = `上次更新: ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+(function enablePullToRefresh(){
+  const root = document.getElementById('pageRoot');
+  let startY = 0; let pulling = false; let triggered = false;
+  root.addEventListener('touchstart', (e)=>{ if(document.scrollingElement.scrollTop<=0){ startY = e.touches[0].clientY; pulling=true; triggered=false; } });
+  root.addEventListener('touchmove', (e)=>{ if(!pulling) return; const dy = e.touches[0].clientY - startY; if(dy>80 && !triggered){ triggered=true; load(); MobileUI.toast('刷新中...'); } });
+  root.addEventListener('touchend', ()=>{ pulling=false; });
+})();
+
+(()=>{
+  const d = new Date();
+  const pad = n=> (n<10?('0'+n):n);
+  document.getElementById('dateInput').value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  document.getElementById('dateInput').onchange = load;
+})();
+load();
+MobileUI.fadeIn('#pageRoot');
+</script>
+
+<!-- 个人十大事项编辑 (升级版样式) -->
+<div class="modal fade" id="personalEdit" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:24px; border:none; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">编辑个人事项</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-2 pb-4">
+        <div id="personalOptions" class="list-group list-group-flush"></div>
+        <div class="d-grid mt-3"><button class="btn btn-primary rounded-pill py-3 fw-bold shadow-sm" id="savePersonalBtn">保存设置</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ocPersonal = new bootstrap.Modal('#personalEdit');
+document.getElementById('btnEditPersonal').onclick = openPersonalEditor;
+document.getElementById('savePersonalBtn').onclick = savePersonalSelection;
+
+async function openPersonalEditor(){
+  const box = document.getElementById('personalOptions');
+  box.innerHTML = '<div class="text-center text-muted py-5"><div class="spinner-border text-primary"></div></div>';
+  try{
+    const res = await fetchJSON('/dashboard/get_personal_tasks/');
+    if(res && res.success){
+      box.innerHTML = '';
+      (res.tasks||[]).forEach(t=>{
+        const row = document.createElement('label');
+        row.className = 'list-group-item d-flex align-items-center py-3 border-0 border-bottom';
+        row.innerHTML = `<input class=\"form-check-input me-3\" type=\"checkbox\" value=\"${t.task_id}\" style="width:20px;height:20px;"> 
+                         <div class=\"flex-grow-1\">
+                           <div class="fw-bold text-dark">${t.task_name}</div>
+                           <div class="small text-muted">${t.priority}</div>
+                         </div>`;
+        box.appendChild(row);
+      });
+      const dash = await fetchJSON('/dashboard/api/');
+      const ids = (dash && dash.success) ? (dash.data.personal_tasks||[]).map(x=>x.task_id) : [];
+      const set = new Set(ids);
+      box.querySelectorAll('input[type="checkbox"]').forEach(ch=>{ if(set.has(parseInt(ch.value))){ ch.checked = true; }});
+    }else{ box.innerHTML = '<div class="text-center text-danger py-3">加载失败</div>'; }
+  }catch(e){ box.innerHTML = '<div class="text-center text-danger py-3">网络错误</div>'; }
+  ocPersonal.show();
+}
+
+async function savePersonalSelection(){
+  const ids = Array.from(document.querySelectorAll('#personalOptions input[type="checkbox"]:checked')).map(i=>parseInt(i.value));
+  if(ids.length > 10){ MobileUI.toast('最多选择10个'); return; }
+  try{
+    const res = await fetchJSON('/dashboard/update_personal_top_tasks/', { method:'POST', body: JSON.stringify({ task_ids: ids }) });
+    if(res && res.success){ MobileUI.toast('已保存'); ocPersonal.hide(); load(); }
+    else{ MobileUI.toast(res.message || '保存失败'); }
+  }catch(e){ MobileUI.toast('网络错误'); }
+}
+</script>
+
+<!-- 公司十大任务编辑（管理员）- 代码逻辑同上，仅复用样式 -->
+<div class="modal fade" id="companyEdit" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:24px; border:none; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">编辑公司事项</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-2 pb-4">
+        <div id="companyOptions" class="list-group list-group-flush"></div>
+        <div class="d-grid mt-3"><button class="btn btn-primary rounded-pill py-3 fw-bold shadow-sm" id="saveCompanyBtn">保存设置</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ocCompany = new bootstrap.Modal('#companyEdit');
+document.getElementById('btnEditCompany').onclick = openCompanyEditor;
+document.getElementById('saveCompanyBtn').onclick = saveCompanySelection;
+
+async function openCompanyEditor(){
+  const box = document.getElementById('companyOptions');
+  box.innerHTML = '<div class="text-center text-muted py-5"><div class="spinner-border text-primary"></div></div>';
+  try{
+    const res = await fetchJSON('/dashboard/get_all_tasks/');
+    if(res && res.success){
+      box.innerHTML = '';
+      (res.tasks||[]).forEach(t=>{
+        const row = document.createElement('label');
+        row.className = 'list-group-item d-flex align-items-center py-3 border-0 border-bottom';
+        row.innerHTML = `<input class=\"form-check-input me-3\" type=\"checkbox\" value=\"${t.task_id}\" style="width:20px;height:20px;">
+                         <div class=\"flex-grow-1\">
+                           <div class="fw-bold text-dark">${t.task_name}</div>
+                           <div class="small text-muted">${t.priority}</div>
+                         </div>`;
+        box.appendChild(row);
+      });
+    }else{ box.innerHTML = '<div class="text-center text-danger py-3">加载失败</div>'; }
+  }catch(e){ box.innerHTML = '<div class="text-center text-danger py-3">网络错误</div>'; }
+  ocCompany.show();
+}
+
+async function saveCompanySelection(){
+  const ids = Array.from(document.querySelectorAll('#companyOptions input[type="checkbox"]:checked')).map(i=>parseInt(i.value));
+  if(ids.length > 10){ MobileUI.toast('最多选择10个'); return; }
+  try{
+    const res = await fetchJSON('/dashboard/update_company_top_tasks/', { method:'POST', body: JSON.stringify({ task_ids: ids }) });
+    if(res && res.success){ MobileUI.toast('已保存'); ocCompany.hide(); load(); }
+    else{ MobileUI.toast(res.message || '保存失败'); }
+  }catch(e){ MobileUI.toast('网络错误'); }
+}
+</script>
+
+<!-- 公告详情 Modal -->
+<div class="modal fade" id="announcementModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:24px; border:none; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold" id="annModalTitle">公告详情</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-2 pb-4">
+        <div class="d-flex align-items-center mb-3 text-muted small">
+            <span id="annModalDate"></span>
+            <span class="mx-2">·</span>
+            <span id="annModalPriority"></span>
+        </div>
+        <div id="annModalContent" style="white-space: pre-wrap; font-size: 15px; color: #374151; line-height: 1.6;"></div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-danger w-100 rounded-pill d-none" id="btnDelAnnouncement">删除公告</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 发布公告 Modal -->
+<div class="modal fade" id="createAnnModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:24px; border:none; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">发布新公告</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-2 pb-4">
+        <form id="createAnnForm">
+            <div class="mb-3">
+                <label class="form-label small text-muted">标题</label>
+                <input type="text" class="form-control rounded-3" name="title" required placeholder="请输入公告标题">
+            </div>
+            <div class="mb-3">
+                <label class="form-label small text-muted">内容</label>
+                <textarea class="form-control rounded-3" name="content" rows="4" required placeholder="请输入公告内容..."></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label small text-muted">优先级</label>
+                <select class="form-select rounded-3" name="priority">
+                    <option value="NORMAL">普通</option>
+                    <option value="IMPORTANT">重要</option>
+                    <option value="URGENT">紧急</option>
+                </select>
+            </div>
+            <div class="d-flex justify-content-between mb-4 px-1">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="is_pinned" id="checkPinned">
+                    <label class="form-check-label" for="checkPinned">置顶显示</label>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="push_notification" id="checkPush" checked>
+                    <label class="form-check-label" for="checkPush">IM推送</label>
+                </div>
+            </div>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary rounded-pill py-3 fw-bold shadow-sm" id="btnSubmitAnn">立即发布</button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 发布公告逻辑
+const modalCreateAnn = new bootstrap.Modal(document.getElementById('createAnnModal'));
+document.getElementById('btnAddAnnouncement').onclick = () => {
+    document.getElementById('createAnnForm').reset();
+    modalCreateAnn.show();
+};
+
+document.getElementById('createAnnForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btnSubmitAnn');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '发布中...';
+    
+    const formData = new FormData(e.target);
+    const data = {
+        action: 'create',
+        title: formData.get('title'),
+        content: formData.get('content'),
+        priority: formData.get('priority'),
+        is_pinned: formData.get('is_pinned') === 'on',
+        push_to_im: formData.get('push_notification') === 'on'
+    };
+
+    try {
+        const res = await fetchJSON('/dashboard/api/announcement/ops/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify(data)
+        });
+        
+        if (res && res.success) {
+            MobileUI.toast('发布成功');
+            modalCreateAnn.hide();
+            load(); // 刷新列表
+        } else {
+            MobileUI.toast(res.message || '发布失败');
+        }
+    } catch (err) {
+        MobileUI.toast('网络错误');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
+};
+
+// 删除公告逻辑
+async function deleteAnnouncement(annId) {
+    if (!confirm('确定要删除这条公告吗？')) return;
+    
+    const btn = document.getElementById('btnDelAnnouncement');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '删除中...';
+
+    try {
+        const res = await fetchJSON('/dashboard/api/announcement/ops/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ action: 'delete', announcement_id: annId })
+        });
+        
+        if (res && res.success) {
+            MobileUI.toast('已删除');
+            bootstrap.Modal.getInstance(document.getElementById('announcementModal')).hide();
+            load(); // 刷新列表
+        } else {
+            MobileUI.toast(res.message || '删除失败');
+        }
+    } catch (err) {
+        MobileUI.toast('网络错误');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
+}
+
+// 辅助函数：获取 CSRF Token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>员工管理</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+body{background:#f7f7f7}
+.item{padding:12px 0;border-bottom:1px solid #f0f0f0}
+.item:last-child{border-bottom:0}
+
+/* AI 美化样式 */
+.ai-box { position: relative; background: #fff; border-radius: 20px; padding: 24px; margin-bottom: 16px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 8px 24px rgba(149, 157, 165, 0.08); overflow: hidden; color: #334155; }
+.ai-box:last-child { margin-bottom: 0; }
+.ai-box::before { content: ''; position: absolute; inset: 0; z-index: 0; background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(248,250,252,1) 100%); }
+.ai-box.theme-trend { border-top: 4px solid #6366F1; }
+.ai-box.theme-risk { border-top: 4px solid #F43F5E; }
+.ai-box.theme-action { border-top: 4px solid #10B981; }
+.ai-glow { position: absolute; width: 150px; height: 150px; border-radius: 50%; filter: blur(50px); opacity: 0.15; z-index: 0; }
+.theme-trend .ai-glow { background: #6366F1; top: -60px; right: -60px; }
+.theme-risk .ai-glow { background: #F43F5E; top: -60px; right: -60px; }
+.theme-action .ai-glow { background: #10B981; top: -60px; right: -60px; }
+.ai-watermark { position: absolute; top: -10px; right: -10px; font-size: 80px; opacity: 0.05; transform: rotate(15deg); pointer-events: none; }
+.ai-title-row { font-size: 18px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; position: relative; z-index: 2; }
+.theme-trend .ai-title-row { color: #4F46E5; }
+.theme-risk .ai-title-row { color: #E11D48; }
+.theme-action .ai-title-row { color: #059669; }
+.ai-text { font-size: 15px; color: #475569; line-height: 1.7; position: relative; z-index: 2; font-weight: 500; }
+.ai-list { padding-left: 0; margin: 0; list-style: none; position: relative; z-index: 2; }
+.ai-list li { font-size: 15px; color: #334155; margin-bottom: 12px; display: flex; align-items: start; line-height: 1.6; background: #F8FAFC; padding: 12px 16px; border-radius: 12px; border: 1px solid #F1F5F9; }
+.ai-list-icon { color: #fff; margin-right: 12px; margin-top: 3px; font-size: 12px; background: linear-gradient(135deg, #10B981, #34D399); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 6px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25); }
+.fade-up { animation: fadeInUp 0.5s ease forwards; opacity: 0; transform: translateY(10px); }
+@keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+{% include 'mobile_ui.html' %}
+{% include 'mobile_topbar.html' %}
+<div class="header p-3 bg-white border-bottom sticky-top">
+  <div class="container d-flex gap-2">
+    <input id="query" class="form-control form-control-sm" placeholder="搜索姓名/工号">
+    <button id="searchBtn" class="btn btn-primary btn-sm">搜索</button>
+    <button id="addBtn" class="btn btn-success btn-sm ms-auto">新增</button>
+  </div>
+</div>
+
+<div class="container py-3">
+  <div class="card p-2">
+    <div id="list"></div>
+  </div>
+</div>
+
+<!-- 新增/编辑弹窗 -->
+<div class="modal" tabindex="-1" id="editor">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editorTitle">新增员工</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2">
+          <label class="form-label">工号</label>
+          <input id="f_work_id" class="form-control" required>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">姓名</label>
+          <input id="f_name" class="form-control" required>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">邮箱</label>
+          <input id="f_email" class="form-control">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">电话</label>
+          <input id="f_phone" class="form-control">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">部门ID</label>
+          <input id="f_department" class="form-control" placeholder="可留空">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">职位</label>
+          <input id="f_position" class="form-control" placeholder="可留空">
+        </div>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="f_is_admin">
+          <label class="form-check-label" for="f_is_admin">是否为管理员</label>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">状态</label>
+          <select id="f_status" class="form-select">
+            <option value="ACTIVE">在职</option>
+            <option value="LEAVE">请假</option>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">上级工号（可选）</label>
+          <input id="f_manager" class="form-control" placeholder="上级工号">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary" id="saveBtn">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const editor = new bootstrap.Modal('#editor');
+let editingWorkId = null;
+
+async function fetchJSON(url, options={}){
+  const r = await fetch(url, Object.assign({ credentials:'include' }, options));
+  try { return await r.json(); } catch(e){ return {}; }
+}
+
+function esc(s){ return (s||'').replace(/</g,'&lt;'); }
+
+async function load(){
+  const q = document.getElementById('query').value.trim();
+  const url = `/dashboard/api/employees/${q?`?query=${encodeURIComponent(q)}`:''}`;
+  const res = await fetchJSON(url);
+  const box = document.getElementById('list');
+  box.innerHTML = '';
+  if(!res.success){ box.innerHTML = '<div class="text-center text-muted py-4">加载失败</div>'; return; }
+  const arr = res.employees || [];
+  if(arr.length===0){ box.innerHTML = '<div class="text-center text-muted py-4">暂无员工</div>'; return; }
+  arr.forEach(e=>{
+    const d = document.createElement('div');
+    d.className='item';
+    d.innerHTML = `
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="flex-grow-1">
+          <div class="fw-semibold">${esc(e.employee_name)} <span class="text-muted" style="font-size:12px;">(${esc(e.work_id)})</span></div>
+          <div class="text-muted" style="font-size:12px;">部门ID：${esc(e.department_id||'—')} · 职位：${esc(e.position||'—')} · 状态：${esc(e.status)}</div>
+        </div>
+        <div class="ms-2 d-flex flex-column gap-1">
+          <button class="btn btn-outline-secondary btn-sm" data-act="edit" data-id="${e.work_id}">编辑</button>
+          <button class="btn btn-outline-warning btn-sm" data-act="ai" data-eid="${e.employee_id}">AI</button>
+          <button class="btn btn-outline-danger btn-sm" data-act="del" data-id="${e.work_id}">删除</button>
+        </div>
+      </div>`;
+    d.querySelector('[data-act="edit"]').onclick=()=>editEmployee(e.work_id);
+    d.querySelector('[data-act="del"]').onclick=()=>delEmployee(e.work_id);
+    d.querySelector('[data-act="ai"]').onclick=()=>showAi(e.employee_id, e.employee_name);
+    box.appendChild(d);
+  });
+}
+
+function openEditor(data){
+  document.getElementById('editorTitle').textContent = editingWorkId ? '编辑员工' : '新增员工';
+  document.getElementById('f_work_id').value = data?.work_id || '';
+  document.getElementById('f_name').value = data?.employee_name || '';
+  document.getElementById('f_email').value = data?.email || '';
+  document.getElementById('f_phone').value = data?.phone_number || '';
+  document.getElementById('f_department').value = data?.department_id || '';
+  document.getElementById('f_position').value = data?.position || '';
+  document.getElementById('f_is_admin').checked = !!(data && data.is_admin);
+  document.getElementById('f_status').value = data?.status || 'ACTIVE';
+  document.getElementById('f_manager').value = data?.manager_id || '';
+  editor.show();
+}
+
+async function editEmployee(workId){
+  editingWorkId = workId;
+  const res = await fetchJSON(`/employee_list/get/?work_id=${encodeURIComponent(workId)}`);
+  if(res && res.success && res.employee){
+    openEditor(res.employee);
+  }
+}
+
+async function delEmployee(workId){
+  if(!confirm('确认删除该员工？')) return;
+  const form = new URLSearchParams();
+  form.set('work_id', workId);
+  const res = await fetchJSON('/employee_list/delete/', { method:'POST', body: form });
+  if(res.success){ load(); } else { alert(res.message||'删除失败'); }
+}
+
+async function save(){
+  const form = new URLSearchParams();
+  form.set('work_id', document.getElementById('f_work_id').value.trim());
+  form.set('employee_name', document.getElementById('f_name').value.trim());
+  form.set('email', document.getElementById('f_email').value.trim());
+  form.set('phone_number', document.getElementById('f_phone').value.trim());
+  form.set('department_id', document.getElementById('f_department').value.trim());
+  form.set('position', document.getElementById('f_position').value.trim());
+  form.set('is_admin', document.getElementById('f_is_admin').checked ? '1' : '0');
+  form.set('status', document.getElementById('f_status').value);
+  form.set('manager_id', document.getElementById('f_manager').value.trim());
+
+  if(editingWorkId){
+    // 更新
+    const res = await fetchJSON('/employee_list/update/', { method:'POST', body: form });
+    if(res.success){ editor.hide(); editingWorkId = null; load(); } else { alert(res.message||'更新失败'); }
+  }else{
+    // 新增
+    const res = await fetchJSON('/employee_list/add', { method:'POST', body: form });
+    if(res.success){ editor.hide(); load(); } else { alert(res.message||'新增失败'); }
+  }
+}
+
+async function showAi(empId, name){
+  document.getElementById('aiTitle').innerHTML = `
+    <span style="width:32px;height:32px;border-radius:8px;font-size:16px;background:#f59e0b;color:#fff;display:flex;align-items:center;justify-content:center;margin-right:10px;"><i class="fas fa-robot"></i></span>
+    ${name} AI 分析`;
+  const box = document.getElementById('aiAdviceBox');
+  box.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-dark"></div></div>';
+  try{
+    const r = await fetchJSON(`/ai/api/analysis/${empId}/`);
+    if(r && r.success && r.exists){
+      const raw = r.ai_advice || '';
+      try {
+          const data = JSON.parse(raw);
+          if(data.trend && data.risk && data.actions){
+               box.innerHTML = `
+                 <div class="ai-box theme-trend fade-up" style="animation-delay: 0.1s;">
+                    <i class="fas fa-chart-line ai-watermark text-primary"></i>
+                    <div class="ai-title-row text-primary"><i class="fas fa-chart-line me-2"></i>趋势解读</div>
+                    <div class="ai-text">${data.trend}</div>
+                 </div>
+                 <div class="ai-box theme-risk fade-up" style="animation-delay: 0.2s;">
+                    <i class="fas fa-exclamation-triangle ai-watermark text-danger"></i>
+                    <div class="ai-title-row text-danger"><i class="fas fa-exclamation-triangle me-2"></i>风险预警</div>
+                    <div class="ai-text">${data.risk}</div>
+                 </div>
+                 <div class="ai-box theme-action fade-up" style="animation-delay: 0.3s;">
+                    <i class="fas fa-clipboard-check ai-watermark text-success"></i>
+                    <div class="ai-title-row text-success"><i class="fas fa-check-circle me-2"></i>行动建议</div>
+                    <ul class="ai-list">
+                       ${data.actions.map(a => `<li><div class="ai-list-icon"><i class="fas fa-check"></i></div><div>${a}</div></li>`).join('')}
+                    </ul>
+                 </div>
+               `;
+          } else {
+              throw new Error('Format mismatch');
+          }
+      } catch(e) {
+           box.style.whiteSpace = 'pre-wrap';
+           box.textContent = raw;
+       }
+    }else if(r && r.success && !r.exists){
+      box.textContent = '暂无AI分析数据';
+    }else{
+      box.textContent = r.message || '网络错误';
+    }
+  }catch(e){ box.textContent = '网络错误'; }
+  new bootstrap.Modal(document.getElementById('aiModal')).show();
+}
+
+(function init(){
+  document.getElementById('searchBtn').onclick = load;
+  document.getElementById('addBtn').onclick = ()=>{ editingWorkId = null; openEditor(null); };
+  document.getElementById('saveBtn').onclick = save;
+  load();
+  MobileUI.fadeIn('#main-content');
+  MobileUI.bindNavFade('body');
+})();
+</script>
+
+<!-- AI Modal (美化版) -->
+<div class="modal fade" id="aiModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius: 24px; border: none; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+      <div class="modal-header border-0 pb-0 bg-gradient-dark text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding-top:20px; border-radius: 24px 24px 0 0;">
+        <h5 class="modal-title fw-bold d-flex align-items-center" id="aiTitle" style="color:white;">
+          <span style="width:32px;height:32px;border-radius:8px;font-size:16px;background:#f59e0b;color:#fff;display:flex;align-items:center;justify-content:center;margin-right:10px;"><i class="fas fa-robot"></i></span>
+          AI 智能分析
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="p-3 bg-light rounded-4 border border-light shadow-sm">
+          <div id="aiAdviceBox" style="font-size:15px; line-height:1.8; color:#334155;"></div>
+        </div>
+        <div class="text-end mt-3 text-muted small"><i class="fas fa-magic me-1"></i>Generated by AI</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include 'mobile_nav.html' %}
+</body>
+</html>

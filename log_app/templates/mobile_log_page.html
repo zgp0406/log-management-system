@@ -1,0 +1,1271 @@
+<!-- FILE: mobile_log_page.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>工作日志</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+  :root {
+    --bg-body: #F0F4F8;
+    --primary-color: #0056b3;
+    --primary-grad: linear-gradient(135deg, #0056b3 0%, #004494 100%);
+    --card-bg: #ffffff;
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+  }
+
+  body { 
+    background: var(--bg-body);
+    background-image: radial-gradient(circle at 90% 10%, #e0e7ff 0%, #f0f4f8 40%);
+    background-attachment: fixed;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; 
+    padding-bottom: 100px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 顶部固定栏 */
+  .page-header {
+    position: relative; /* Changed from sticky to relative per user preference in other views */
+    z-index: 100;
+    background: transparent; /* Cleaner look */
+    padding: 12px 16px;
+    padding-top: max(12px, env(safe-area-inset-top));
+  }
+
+  .header-title-row {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+  }
+  .page-title {
+    font-size: 24px; font-weight: 800;
+    color: #1e293b;
+    letter-spacing: -0.5px;
+  }
+  
+  /* 工具栏容器 */
+  .toolbar-row {
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(10px);
+    padding: 12px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    margin-bottom: 10px;
+  }
+  .toolbar-top {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  
+  /* 日期筛选美化 */
+  .date-filter-wrapper {
+    display: flex; align-items: center; gap: 8px;
+    background: #fff;
+    border-radius: 20px;
+    padding: 6px 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.05);
+    transition: all 0.2s;
+    width: fit-content;
+  }
+  .date-filter-wrapper:active { transform: scale(0.98); background: #f8fafc; }
+  .date-input-clean {
+    border: none; background: transparent; outline: none;
+    font-size: 14px; font-weight: 600; color: #334155;
+    width: 105px; font-family: inherit;
+  }
+  
+  /* 美化输入框 */
+  .modern-input {
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: #fff;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #334155;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+  }
+  .modern-input:focus {
+    background: #fff; border-color: var(--primary-color); outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1);
+  }
+  
+  .search-wrapper {
+    position: relative; flex: 1;
+  }
+  .search-wrapper i {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: #94A3B8; font-size: 13px;
+  }
+  .search-input {
+    width: 100%; padding-left: 34px;
+  }
+
+  /* 日志卡片 */
+  .log-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: none;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .log-card:active { transform: scale(0.99); }
+  
+  .avatar-circle {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #0056b3);
+    color: white;
+    font-weight: 700; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 10px rgba(0, 86, 179, 0.2);
+    flex-shrink: 0;
+  }
+
+  .log-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .user-name { font-weight: 700; color: #1E293B; font-size: 14px; }
+  .log-time { font-size: 11px; color: #94A3B8; }
+  
+  .log-badge {
+    font-size: 10px; padding: 2px 6px; border-radius: 6px;
+    background: #F1F5F9; color: #64748B; font-weight: 600;
+    margin-left: 6px; vertical-align: middle;
+  }
+  .badge-work { background: #E0F2FE; color: #0284C7; }
+  .badge-study { background: #ECFDF5; color: #059669; }
+
+  .log-content {
+    font-size: 15px; color: #334155; line-height: 1.6;
+    margin-bottom: 10px; white-space: pre-wrap;
+  }
+  
+  .log-meta {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    font-size: 12px; color: #64748B; margin-top: 8px;
+  }
+  .meta-tag {
+    background: #F8FAFC; border: 1px solid #E2E8F0;
+    padding: 2px 8px; border-radius: 12px; color: #64748B;
+  }
+  
+  .log-actions {
+    display: flex; gap: 12px; margin-top: 12px; padding-top: 12px;
+    border-top: 1px dashed #F1F5F9; justify-content: flex-end;
+  }
+  .action-btn {
+    font-size: 12px; color: #64748B; background: none; border: none;
+    display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px;
+    transition: background 0.2s;
+  }
+  .action-btn:active { background: #F1F5F9; }
+  .btn-edit-icon { color: #0056b3; }
+  .btn-del-icon { color: #EF4444; }
+
+  /* 悬浮添加按钮 (FAB) - 降低 z-index 防止遮挡 Offcanvas */
+  .fab-add {
+    position: fixed; bottom: 100px; right: 20px; z-index: 101; 
+    width: 56px; height: 56px;
+    background: var(--primary-grad);
+    color: white; border: none; border-radius: 50%;
+    box-shadow: 0 8px 20px rgba(0, 86, 179, 0.3);
+    font-size: 24px; display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  .fab-add:active { transform: scale(0.9); }
+  
+  /* 当 Offcanvas 打开时隐藏 FAB */
+  body.offcanvas-open .fab-add {
+    opacity: 0; pointer-events: none;
+  }
+
+  /* 骨架屏 */
+  .skeleton { background: #E2E8F0; border-radius: 8px; position: relative; overflow: hidden; }
+  .shimmer { animation: shimmer 1.5s infinite; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent); position: absolute; inset: 0; }
+  @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+  /* Modal 美化 */
+  .modal-dialog-scrollable {
+    height: auto !important; /* 不强制占满高度 */
+    max-height: 65vh !important; /* 限制整个弹窗（含Header/Footer）的最大高度 */
+    margin-top: auto !important;
+    margin-bottom: auto !important; /* 垂直居中 */
+  }
+  .modal-content {
+    border-radius: 24px;
+    border: none;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-height: 65vh !important; /* 限制内容区域最大高度 */
+    overflow: hidden; /* 防止溢出圆角 */
+  }
+  .modal-dialog {
+    margin: 1.75rem; 
+  }
+  .modal-header {
+    padding: 20px 24px 10px 24px;
+  }
+  .modal-body {
+    padding: 10px 24px 24px 24px;
+    overflow-y: auto; /* 确保内容可滚动 */
+    scrollbar-width: none; /* Firefox 隐藏滚动条 */
+  }
+  .modal-body::-webkit-scrollbar { display: none; /* Chrome/Safari 隐藏滚动条 */ }
+  .modal-footer {
+    border-top: none;
+    padding: 0 24px 24px 24px; /* 底部留白 */
+  }
+  .modal-backdrop.show {
+    opacity: 0.7;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  /* Offcanvas 样式移除或保留备用 (已移除) */
+  
+  .form-label { font-size: 13px; color: #64748B; font-weight: 700; margin-bottom: 8px; }
+  .form-control, .form-select { 
+    border-radius: 12px; border: 1px solid #E2E8F0; padding: 12px; background: #F8FAFC;
+    font-size: 15px;
+  }
+  .form-control:focus, .form-select:focus {
+    background: #fff; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1);
+  }
+  
+  /* Tag 选择器 */
+  .tag-select-btn {
+    border: 1px solid #E2E8F0; background: #fff; color: #64748B;
+    border-radius: 20px; padding: 6px 14px; font-size: 13px;
+    transition: all 0.2s; margin-bottom: 8px;
+  }
+  .tag-select-btn.active {
+    background: #E0F2FE; border-color: #0056b3; color: #0056b3; font-weight: 600;
+  }
+  
+  /* 文件上传美化 */
+  .file-upload-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+    width: 100%;
+  }
+  .file-upload-btn {
+    border: 2px dashed #CBD5E1;
+    border-radius: 12px;
+    background: #F8FAFC;
+    color: #64748B;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .file-upload-btn:hover, .file-upload-btn:active {
+    border-color: var(--primary-color);
+    background: #F0F9FF;
+    color: var(--primary-color);
+  }
+  
+  /* 动画 */
+  .fade-up { animation: fadeInUp 0.5s ease forwards; opacity: 0; transform: translateY(10px); }
+  @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+  /* 员工筛选列表 */
+  .employee-list-item {
+    display: flex; align-items: center; padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .employee-list-item:active { background: #f8fafc; }
+  .employee-list-item.active { background: #eff6ff; }
+  .employee-list-item.active .emp-name { color: #2563eb; font-weight: 600; }
+  .emp-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #cbd5e1; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    margin-right: 12px; font-weight: 600; font-size: 13px;
+  }
+  .emp-info { flex: 1; }
+  .emp-name { font-size: 15px; color: #334155; margin-bottom: 2px; }
+  .emp-dept { font-size: 12px; color: #94a3b8; }
+</style>
+</head>
+<body>
+{% include 'mobile_ui.html' %}
+{% include 'mobile_topbar.html' %}
+
+<div class="page-header" id="pageRoot">
+  <div class="header-title-row">
+    <div class="page-title"><i class="fas fa-book-open me-2"></i>工作日志</div>
+    <div id="lastUpdated" class="text-muted" style="font-size:11px; opacity:0.8;">更新中...</div>
+  </div>
+  
+  <div class="toolbar-row">
+    <div class="toolbar-top">
+        <div class="date-filter-wrapper">
+           <i class="far fa-calendar-alt text-primary"></i>
+           <input type="date" id="dateInput" class="date-input-clean">
+        </div>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <button id="filterBtn" class="btn btn-light btn-sm rounded-circle shadow-sm d-none" style="width:34px;height:34px;padding:0; border:1px solid #e2e8f0; display:flex; align-items:center; justify-content:center;"><i class="fas fa-filter text-secondary" style="font-size:13px;"></i></button>
+            <select id="viewMode" class="modern-input" style="width: auto; padding-right: 8px; display:none;">
+              <option value="mine">我的</option>
+              <option value="all">全部</option>
+            </select>
+        </div>
+    </div>
+    <div class="search-wrapper mt-2 w-100">
+      <i class="fas fa-search"></i>
+      <input id="query" class="modern-input search-input" placeholder="搜索日志...">
+    </div>
+  </div>
+</div>
+
+<div class="container py-3">
+  <!-- 骨架屏 -->
+  <div id="skeletonBox">
+    <div class="log-card">
+      <div class="d-flex gap-3">
+        <div class="skeleton" style="width:42px; height:42px; border-radius:50%;"></div>
+        <div style="flex:1">
+          <div class="skeleton mb-2" style="width:50%; height:16px;"></div>
+          <div class="skeleton mb-2" style="width:100%; height:14px;"></div>
+          <div class="skeleton" style="width:80%; height:14px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="text-center text-muted py-5 d-none" id="emptyState" style="font-size:14px;">
+    <i class="far fa-clipboard fa-2x mb-3 text-light-emphasis"></i><br>暂无日志
+  </div>
+  
+  <div id="logsList"></div>
+  
+  <!-- 分页 -->
+  <nav aria-label="Page navigation" class="mt-4 mb-5">
+    <ul class="pagination justify-content-center" id="pagination"></ul>
+  </nav>
+</div>
+
+<!-- 日志详情弹窗 (只读) -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:24px; border:none; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">日志详情</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-3 pb-4">
+        <!-- 用户信息 -->
+        <div class="d-flex align-items-center mb-3">
+            <div id="detailAvatar" class="avatar-circle me-3" style="width:48px;height:48px;font-size:18px;">U</div>
+            <div>
+                <div id="detailName" class="fw-bold text-dark" style="font-size:16px;">UserName</div>
+                <div id="detailTime" class="text-muted small">Time</div>
+            </div>
+            <div class="ms-auto">
+                 <span id="detailType" class="badge rounded-pill bg-light text-dark border px-3 py-2">Type</span>
+            </div>
+        </div>
+
+        <!-- 心情与标签 -->
+        <div class="d-flex flex-wrap gap-2 mb-3" id="detailTags"></div>
+
+        <!-- 内容 -->
+        <div class="p-3 bg-light rounded-4 mb-3">
+            <div id="detailContent" style="font-size:15px; line-height:1.6; color:#334155; white-space: pre-wrap;"></div>
+        </div>
+
+        <!-- 图片 -->
+        <div id="detailImgBox" class="mb-3 d-none">
+            <img id="detailImg" src="" class="img-fluid rounded-3 shadow-sm w-100" style="object-fit:cover;" alt="附件">
+        </div>
+
+        <!-- 位置 -->
+        <div class="d-flex align-items-center text-muted small" id="detailLocBox">
+            <i class="fas fa-map-marker-alt text-danger me-2"></i>
+            <span id="detailLoc">位置信息</span>
+        </div>
+      </div>
+      <!-- Footer: 仅当有权限编辑时显示 -->
+      <div class="modal-footer border-0 pt-0 d-none" id="detailFooter">
+         <button class="btn btn-outline-primary rounded-pill w-100 fw-bold" id="detailEditBtn">编辑日志</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 创建/编辑弹窗 (保留用于新建和编辑) -->
+<div class="modal fade" id="editor" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header border-bottom-0">
+        <h5 class="modal-title fw-bold" id="editorTitle">撰写日志</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-2 mb-3">
+      <div class="col-6">
+        <label class="form-label">类型</label>
+        <select id="logType" class="form-select">
+          <option value="WORK">工作</option>
+          <option value="MEETING">会议</option>
+          <option value="COMMUNICATION">沟通</option>
+          <option value="DEVELOPMENT">开发</option>
+          <option value="STUDY">学习</option>
+        </select>
+      </div>
+      <div class="col-6">
+        <label class="form-label">心情</label>
+        <select id="emotion" class="form-select">
+          <option value="">无</option>
+          <option value="ACTIVE">😁 积极</option>
+          <option value="FOCUSED">🧠 专注</option>
+          <option value="SATISFIED">😎 满意</option>
+          <option value="TIRED">😫 疲惫</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">内容</label>
+      <textarea id="content" class="form-control" rows="5" placeholder="今天完成了什么工作？..."></textarea>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">标签</label>
+      <div id="tagsBox" class="d-flex flex-wrap gap-2"></div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">位置</label>
+      <div class="d-flex align-items-center gap-2 p-3 rounded-3 bg-white border shadow-sm">
+        <div class="d-flex align-items-center justify-content-center bg-danger bg-opacity-10 text-danger rounded-circle" style="width:32px;height:32px;">
+             <i class="fas fa-map-marker-alt"></i>
+        </div>
+        <div id="locText" class="text-truncate flex-grow-1 fw-medium text-dark" style="font-size:14px;">定位中...</div>
+        <button id="locRefresh" class="btn btn-sm btn-light border px-3 rounded-pill" type="button"><i class="fas fa-sync-alt"></i></button>
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <label class="form-label">附件图片</label>
+      <div class="file-upload-wrapper">
+        <input type="file" id="logImage" class="d-none" accept="image/*">
+        <label for="logImage" class="file-upload-btn" id="fileUploadBtn">
+          <i class="fas fa-camera"></i> <span>点击上传图片</span>
+        </label>
+      </div>
+      <div id="mobileImagePreview" class="mt-3 d-none position-relative text-center">
+        <img src="" alt="预览" class="img-fluid rounded shadow-sm" style="max-height: 200px; object-fit: cover;">
+        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 rounded-circle" id="clearImageBtn" style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+            <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="form-check mt-2 d-none">
+        <input class="form-check-input" type="checkbox" id="mobileRemoveImage">
+        <label class="form-check-label small text-muted" for="mobileRemoveImage">移除图片</label>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer d-block">
+    <div class="d-grid gap-2">
+      <button id="saveBtn" class="btn btn-primary rounded-pill py-3 fw-bold shadow">保存日志</button>
+      <button id="startEditBtn" class="btn btn-primary rounded-pill py-3 fw-bold shadow d-none">编辑</button>
+    </div>
+  </div>
+    </div>
+  </div>
+</div>
+
+<!-- 悬浮添加按钮 -->
+<button id="newBtn" class="fab-add"><i class="fas fa-plus"></i></button>
+
+{% include 'mobile_nav.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- 员工筛选弹窗 -->
+<div class="modal fade" id="empFilterModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:16px; border:none;">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fs-6 fw-bold">筛选员工</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-2">
+         <input type="text" id="empSearch" class="form-control form-control-sm mb-3 rounded-pill bg-light border-0 px-3" placeholder="搜索姓名..." style="height:36px;">
+         <div id="empList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const apiBase = '';
+let editingLogId = null;
+const editor = new bootstrap.Modal('#editor');
+const detailModal = new bootstrap.Modal('#detailModal'); // 新增详情弹窗实例
+let currentLocation = { lat: null, lng: null, name: '' };
+const AMAP_KEY = '{{ amap_key|default:"" }}';
+const AMAP_SECURITY_JS_CODE = '{{ amap_security_js_code|default:"" }}';
+if(AMAP_SECURITY_JS_CODE){
+  window._AMapSecurityConfig = {
+    securityJsCode: AMAP_SECURITY_JS_CODE,
+  };
+}
+
+function fmtDate(d){
+  const pad=n=>n<10?'0'+n:n;return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+async function fetchJSON(url, options={}){
+  const opts = Object.assign({ credentials: 'include' }, options);
+  const headers = Object.assign({ 'Accept': 'application/json' }, opts.headers || {});
+  if (!(opts.body instanceof FormData) && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+  opts.headers = headers;
+  const resp = await fetch(url, opts);
+  return resp.json();
+}
+
+async function fetchAmaps(url){
+  const ctrl = new AbortController();
+  const id = setTimeout(()=> ctrl.abort(), 5000);
+  try{
+    const r = await fetch(url, { signal: ctrl.signal, credentials: 'include' });
+    clearTimeout(id);
+    return await r.json();
+  }catch(e){ clearTimeout(id); throw e; }
+}
+
+function loadAmapSdk(){
+  return new Promise((resolve, reject)=>{
+    if(window.AMap){ resolve(); return; }
+    if(!AMAP_KEY){ reject(new Error('no key')); return; }
+    const s = document.createElement('script');
+    s.src = `https://webapi.amap.com/maps?v=2.0&key=${encodeURIComponent(AMAP_KEY)}&plugin=AMap.Geolocation,AMap.CitySearch`;
+    s.onload = ()=> resolve();
+    s.onerror = ()=> reject(new Error('sdk load failed'));
+    document.head.appendChild(s);
+  });
+}
+
+function amapCitySearch(){
+  return new Promise((resolve, reject)=>{
+    try{
+      const cs = new AMap.CitySearch();
+      cs.getLocalCity((status, result)=>{
+        if(status === 'complete' && result && result.info === 'OK'){
+           // CitySearch usually returns bounds but not a single point. 
+           // We can use the center of bounds if available, or just return the name.
+           let lat = null, lng = null;
+           if(result.bounds && result.bounds.getCenter){
+             const c = result.bounds.getCenter();
+             lat = c.lat; lng = c.lng;
+           }
+           const addr = (result.province||'') + (result.city||'');
+           resolve({ lng, lat, address: addr, isIp: true });
+        } else {
+           reject(new Error('CitySearch failed'));
+        }
+      });
+    }catch(e){ reject(e); }
+  });
+}
+
+function amapGeolocate(){
+  return new Promise(async (resolve, reject)=>{
+    try{
+      // 增加5秒超时限制，防止SDK加载或定位卡死
+      const timeoutPromise = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 6000));
+      
+      const loadAndLocate = async () => {
+          await loadAmapSdk();
+          const isHttps = window.isSecureContext;
+          // Android WebView need to grant permission manually sometimes, 
+          // but AMap SDK usually handles it if the permission is granted in AndroidManifest.
+          // However, we should ensure the option 'enableHighAccuracy' is set correctly.
+          
+          const geo = new AMap.Geolocation({ 
+              enableHighAccuracy: true, // Always try high accuracy
+              timeout: 10000,           // Increase timeout to 10s
+              convert: true,
+              needAddress: true
+          });
+
+          return new Promise((res, rej) => {
+              geo.getCurrentPosition(function(status, result){
+                if(status === 'complete' && result){
+                  const lnglat = result.position || result.lnglat;
+                  const addr = result.formattedAddress || result.address || '';
+                  res({ lng: lnglat.lng, lat: lnglat.lat, address: addr });
+                }else{
+                  const reason = (result && result.message) ? result.message : (result && result.info ? result.info : 'unknown');
+                  // Special handling for permission denied
+                  if (reason.includes('permission denied') || reason.includes('定位失败')) {
+                      // Try to fallback to IP location implicitly if GPS fails hard
+                      console.warn('GPS failed, reason:', reason);
+                  }
+                  rej(new Error('AMap: ' + reason));
+                }
+              });
+          });
+      };
+
+      const result = await Promise.race([loadAndLocate(), timeoutPromise]);
+      resolve(result);
+    }catch(e){ reject(e); }
+  });
+}
+
+function composeAddrFromRegeo(rg){
+  if(!rg) return '';
+  let addr = rg.formatted_address || '';
+  if(addr) return addr;
+  const ac = rg.addressComponent || {};
+  const parts = [];
+  const prov = ac.province || '';
+  const city = ac.city || '';
+  if(prov) parts.push(prov);
+  if(city && city !== prov) parts.push(city);
+  if(ac.district) parts.push(ac.district);
+  if(ac.township) parts.push(ac.township);
+  const sn = ac.streetNumber || {};
+  const streetPart = [sn.street || '', sn.number || ''].join('').trim();
+  if(streetPart) parts.push(streetPart);
+  if(!streetPart){
+    const pois = rg.pois || [];
+    if(pois.length>0){ parts.push(pois[0].name || ''); }
+  }
+  return parts.filter(Boolean).join(' ');
+}
+
+async function ensureLocation(){
+  const txt = document.getElementById('locText');
+  const btn = document.getElementById('locRefresh');
+  
+  // UI重置
+  try{ 
+      btn.disabled = true; 
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; 
+      txt.textContent = '正在获取位置…';
+      txt.style.color = '#334155'; // Reset color
+  }catch(_){}
+  
+  try{
+    // 1. 尝试高德SDK精确定位
+    const res = await amapGeolocate();
+    
+    currentLocation.lat = res.lat; 
+    currentLocation.lng = res.lng;
+    
+    let name = res.address || '';
+    // 如果没有地址名称但有坐标，尝试逆地理编码
+    if(!name && AMAP_KEY){
+        try{
+          const j = await fetchJSON(`${apiBase}/logs/api/amap/regeo/?lng=${encodeURIComponent(res.lng)}&lat=${encodeURIComponent(res.lat)}`);
+          name = (j && j.status==='1' && j.regeocode) ? composeAddrFromRegeo(j.regeocode) : '';
+        }catch(_){}
+    }
+    
+    currentLocation.name = name || '';
+    txt.textContent = name || `(${res.lat.toFixed(4)}, ${res.lng.toFixed(4)})`;
+    
+  }catch(err){
+    console.error('Geo error:', err);
+    txt.textContent = '精确定位失败，尝试IP定位...';
+    
+    // 2. 兜底逻辑：IP定位
+    try{
+        const j = await fetchAmaps(`${apiBase}/logs/api/amap/ip/`);
+        // 确保 j 是有效对象
+        if(!j || j.status !== '1') throw new Error(j.info || 'IP API failed');
+        
+        const prov = typeof j.province === 'string' ? j.province : '';
+        const city = typeof j.city === 'string' ? j.city : '';
+        
+        // 过滤空数组或非字符串情况
+        const cleanProv = prov === '[]' ? '' : prov;
+        const cleanCity = city === '[]' ? '' : city;
+        
+        const ipName = cleanCity && cleanCity !== cleanProv ? `${cleanProv} ${cleanCity}` : (cleanProv || cleanCity || '');
+        
+        if(ipName){ 
+            txt.textContent = ipName; 
+            currentLocation.name = ipName; 
+            currentLocation.lat = null;
+            currentLocation.lng = null;
+        } else {
+            throw new Error('IP location empty');
+        }
+    }catch(e2){
+        console.error('IP Geo error:', e2);
+        txt.textContent = '定位失败 (点击重试)';
+        txt.style.color = '#EF4444'; // Red color for error
+    }
+  }
+  finally{ 
+      try{ 
+          btn.disabled = false; 
+          btn.innerHTML = '<i class="fas fa-sync-alt"></i>'; 
+      }catch(_){} 
+  }
+}
+
+async function loadTags(){
+  const res = await fetchJSON(`${apiBase}/logs/api/tags/`);
+  const box = document.getElementById('tagsBox');
+  box.innerHTML = '';
+  if(res.success){
+    res.tags.forEach(t=>{
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'tag-select-btn';
+      el.textContent = t.tag_name;
+      el.dataset.tagId = t.tag_id;
+      el.onclick = ()=> el.classList.toggle('active');
+      box.appendChild(el);
+    });
+  }
+}
+
+function selectedTagIds(){
+  return Array.from(document.querySelectorAll('#tagsBox .tag-select-btn.active')).map(b=>parseInt(b.dataset.tagId,10));
+}
+
+let currentPage = 1;
+const pageSize = 5;
+let totalPages = 1;
+let isLoadingLogs = false;
+let currentEmployeeFilter = null;
+let empFilterModalInstance = null;
+
+async function loadEmployees(query=''){
+    if(!empFilterModalInstance) empFilterModalInstance = new bootstrap.Modal(document.getElementById('empFilterModal'));
+    
+    const list = document.getElementById('empList');
+    list.innerHTML = '<div class="text-center py-3 text-muted"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>';
+    
+    try {
+        const res = await fetchJSON(`/dashboard/api/employees/?query=${encodeURIComponent(query)}`);
+        list.innerHTML = '';
+        
+        // Add "All Employees" option
+        const allDiv = document.createElement('div');
+        allDiv.className = `employee-list-item ${!currentEmployeeFilter ? 'active' : ''}`;
+        allDiv.innerHTML = `<div class="emp-avatar" style="background:#64748B"><i class="fas fa-users"></i></div>
+                            <div class="emp-info"><div class="emp-name">全部员工</div><div class="emp-dept">显示所有</div></div>`;
+        allDiv.onclick = () => {
+            currentEmployeeFilter = null;
+            empFilterModalInstance.hide();
+            loadLogs(1);
+        };
+        list.appendChild(allDiv);
+    
+        if(res.success && res.employees){
+            res.employees.forEach(emp => {
+                const div = document.createElement('div');
+                div.className = `employee-list-item ${currentEmployeeFilter === emp.employee_id ? 'active' : ''}`;
+                div.innerHTML = `<div class="emp-avatar">${(emp.employee_name||'U')[0]}</div>
+                                 <div class="emp-info"><div class="emp-name">${emp.employee_name}</div><div class="emp-dept">${emp.work_id}</div></div>`;
+                div.onclick = () => {
+                    currentEmployeeFilter = emp.employee_id;
+                    empFilterModalInstance.hide();
+                    loadLogs(1);
+                };
+                list.appendChild(div);
+            });
+        } else {
+             if(res.message) list.innerHTML = `<div class="text-center py-3 text-muted">${res.message}</div>`;
+        }
+    } catch(e){
+        list.innerHTML = '<div class="text-center py-3 text-muted">加载失败</div>';
+    }
+}
+
+async function loadLogs(page = 1){
+  // Handle event objects from callbacks
+  if(page instanceof Event) page = 1;
+
+  const date = document.getElementById('dateInput').value;
+  const view = document.getElementById('viewMode').value;
+  const q = document.getElementById('query').value.trim();
+  
+  // UI Control for Filter Button
+  const filterBtn = document.getElementById('filterBtn');
+  if(view === 'all'){
+      filterBtn.classList.remove('d-none');
+      if(currentEmployeeFilter) filterBtn.classList.add('btn-primary', 'text-white');
+      else filterBtn.classList.remove('btn-primary', 'text-white');
+  } else {
+      filterBtn.classList.add('d-none');
+      currentEmployeeFilter = null; // Reset filter when switching to 'mine'
+  }
+  
+  if(isLoadingLogs) return;
+  isLoadingLogs = true;
+  
+  currentPage = page;
+
+  document.getElementById('skeletonBox').classList.remove('d-none');
+  document.getElementById('emptyState').classList.add('d-none');
+  document.getElementById('logsList').innerHTML = '';
+  document.getElementById('pagination').innerHTML = '';
+
+  try {
+      let url = `${apiBase}/logs/api/?date=${encodeURIComponent(date)}&view_mode=${encodeURIComponent(view)}${q?`&search=${encodeURIComponent(q)}`:''}&page=${currentPage}&page_size=${pageSize}`;
+      if(currentEmployeeFilter) url += `&employee_id=${currentEmployeeFilter}`;
+      
+      const res = await fetchJSON(url);
+      
+      document.getElementById('skeletonBox').classList.add('d-none');
+      
+      if(!res.success){
+        MobileUI.error(document.getElementById('logsList'), res.message || '加载失败');
+        return;
+      }
+      
+      try{
+        const showSwitcher = !!res.has_admin_access || !!res.is_boss || !!res.can_view_all_logs;
+        document.getElementById('viewMode').style.display = showSwitcher ? 'inline-block' : 'none';
+      }catch(e){}
+
+      totalPages = res.total_pages || 1;
+      
+      if(res.logs.length === 0){
+        document.getElementById('emptyState').classList.remove('d-none');
+        return;
+      }
+      
+      setLastUpdated();
+      
+      const list = document.getElementById('logsList');
+      const todayDate = fmtDate(new Date());
+
+      res.logs.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'log-card fade-up';
+        row.style.animationDelay = (index * 0.05) + 's'; 
+        
+        // 判断是否为今天 (Assuming log_time is "YYYY-MM-DD HH:MM")
+        const isToday = item.log_time.startsWith(todayDate);
+
+        const hasCoords = item.location_lat != null && item.location_lng != null;
+        let locText = '';
+        if(item.location_name) locText = item.location_name;
+        else if(hasCoords) locText = `(${Number(item.location_lng).toFixed(4)}, ${Number(item.location_lat).toFixed(4)})`;
+    
+        let badgeClass = 'log-badge';
+        if(item.log_type_raw === 'WORK') badgeClass += ' badge-work';
+        else if(item.log_type_raw === 'STUDY' || item.log_type_raw === 'DEVELOPMENT') badgeClass += ' badge-study';
+        else badgeClass += ' bg-light text-dark';
+    
+        row.innerHTML = `
+          <div class="d-flex gap-3">
+            <div class="avatar-circle">${(item.employee_name||'U')[0]}</div>
+            <div class="flex-grow-1">
+                <div class="log-header">
+                    <div>
+                        <span class="user-name">${item.employee_name}</span>
+                        <span class="${badgeClass}">${item.log_type}</span>
+                    </div>
+                    <div class="log-time">${item.log_time.split(' ')[1] || item.log_time}</div>
+                </div>
+                
+                <div class="log-content">${item.content ? item.content.replace(/</g,'&lt;') : ''}</div>
+                
+                ${item.image_url ? `<div class="mb-2"><img src="${item.image_url}" class="img-fluid rounded shadow-sm" style="max-height:120px; object-fit:cover;" alt="附件"></div>` : ''}
+                
+                <div class="log-meta">
+                   ${locText ? `<span><i class="fas fa-map-marker-alt text-danger me-1"></i>${locText}</span>` : ''}
+                   ${(item.tags||[]).map(t=>`<span class="meta-tag">#${t}</span>`).join('')}
+                   ${item.emotion_tag ? `<span class="ms-1 text-primary"><i class="far fa-smile"></i> ${item.emotion_tag}</span>` : ''}
+                </div>
+    
+                ${isToday ? `
+                <div class="log-actions">
+                    <button class="action-btn btn-edit-icon" data-action="edit"><i class="fas fa-pen"></i> 编辑</button>
+                    <button class="action-btn btn-del-icon" data-action="del"><i class="fas fa-trash"></i> 删除</button>
+                </div>` : ''}
+            </div>
+          </div>`;
+        
+        // 点击卡片查看详情
+        row.onclick = (e) => {
+            // 如果点击的是按钮，则不触发卡片点击（虽然这里按钮可能被阻止了冒泡，但为了保险）
+            if(e.target.closest('button')) return;
+            openEditor(item);
+        };
+
+        if(isToday){
+            row.querySelector('[data-action="edit"]').onclick = (e)=> { e.stopPropagation(); openEditor(item); };
+            row.querySelector('[data-action="del"]').onclick = (e)=> { e.stopPropagation(); delLog(item.log_id); };
+        }
+        
+        list.appendChild(row);
+      });
+
+      renderPagination(currentPage, totalPages);
+
+  }catch(e){
+      console.error(e);
+      MobileUI.toast('网络错误'); 
+  }finally{
+      isLoadingLogs = false;
+  }
+}
+
+function renderPagination(currentPage, totalPages){
+  const nav = document.getElementById('pagination');
+  nav.innerHTML = '';
+  if(totalPages <= 1) return;
+
+  const createItem = (text, page, isActive=false, isDisabled=false) => {
+    const li = document.createElement('li');
+    li.className = `page-item ${isActive?'active':''} ${isDisabled?'disabled':''}`;
+    li.innerHTML = `<a class="page-link shadow-none" href="javascript:void(0)" style="border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; margin:0 2px; ${isActive?'background-color:#0056b3; border-color:#0056b3; color:#fff;':'color:#64748B; border:none; background:#F1F5F9;'}">${text}</a>`;
+    if(!isDisabled && !isActive) li.onclick = () => loadLogs(page);
+    return li;
+  };
+
+  // Prev
+  nav.appendChild(createItem('<i class="fas fa-chevron-left" style="font-size:12px;"></i>', currentPage-1, false, currentPage<=1));
+  
+  let start = Math.max(1, currentPage - 2);
+  let end = Math.min(totalPages, currentPage + 2);
+  
+  if(start > 1) {
+     nav.appendChild(createItem('1', 1));
+     if(start > 2) nav.appendChild(createItem('...', null, false, true));
+  }
+  
+  for(let i=start; i<=end; i++){
+     nav.appendChild(createItem(i, i, i===currentPage));
+  }
+  
+  if(end < totalPages){
+     if(end < totalPages - 1) nav.appendChild(createItem('...', null, false, true));
+     nav.appendChild(createItem(totalPages, totalPages));
+  }
+
+  // Next
+  nav.appendChild(createItem('<i class="fas fa-chevron-right" style="font-size:12px;"></i>', currentPage+1, false, currentPage>=totalPages));
+}
+
+function openEditor(item){
+  // 如果是查看已有日志，打开纯展示的详情弹窗
+  if(item){
+      showDetail(item);
+      return;
+  }
+
+  // 如果是新建，打开编辑弹窗
+  editingLogId = null;
+  document.getElementById('editorTitle').textContent = '撰写日志';
+  
+  // 重置表单
+  document.getElementById('content').value = '';
+  document.getElementById('content').disabled = false;
+  document.getElementById('logType').value = 'WORK';
+  document.getElementById('logType').disabled = false;
+  document.getElementById('emotion').value = '';
+  document.getElementById('emotion').disabled = false;
+  
+  // 重置 Tags
+  document.querySelectorAll('#tagsBox .tag-select-btn').forEach(b=>{
+    b.classList.remove('active');
+    b.style.pointerEvents = 'auto';
+    b.style.opacity = '1';
+  });
+
+  // 重置图片
+  document.getElementById('logImage').value = '';
+  document.getElementById('logImage').disabled = false;
+  document.getElementById('mobileRemoveImage').checked = false;
+  document.getElementById('mobileImagePreview').classList.add('d-none');
+  document.querySelector('#fileUploadBtn span').textContent = '点击上传图片';
+  document.querySelector('.file-upload-wrapper').classList.remove('d-none');
+  
+  // Footer & Buttons
+  document.querySelector('#editor .modal-footer').classList.remove('d-none');
+  document.getElementById('saveBtn').classList.remove('d-none');
+  document.getElementById('saveBtn').textContent = '保存日志';
+  document.getElementById('startEditBtn').classList.add('d-none');
+  
+  // Location
+  document.getElementById('locRefresh').disabled = false;
+  ensureLocation();
+  
+  editor.show();
+}
+
+function showDetail(item){
+    // 填充详情弹窗
+    document.getElementById('detailAvatar').textContent = (item.employee_name||'U')[0];
+    document.getElementById('detailName').textContent = item.employee_name;
+    document.getElementById('detailTime').textContent = item.log_time;
+    document.getElementById('detailType').textContent = item.log_type;
+    
+    // 标签与心情
+    const tagsContainer = document.getElementById('detailTags');
+    tagsContainer.innerHTML = '';
+    if(item.emotion_tag){
+        const emoSpan = document.createElement('span');
+        emoSpan.className = 'badge bg-primary bg-opacity-10 text-primary border border-primary-subtle rounded-pill px-3 py-2';
+        emoSpan.innerHTML = `<i class="far fa-smile me-1"></i>${item.emotion_tag}`;
+        tagsContainer.appendChild(emoSpan);
+    }
+    (item.tags||[]).forEach(t => {
+        const tagSpan = document.createElement('span');
+        tagSpan.className = 'badge bg-secondary bg-opacity-10 text-secondary border rounded-pill px-3 py-2';
+        tagSpan.textContent = `#${t}`;
+        tagsContainer.appendChild(tagSpan);
+    });
+
+    // 内容
+    document.getElementById('detailContent').textContent = item.content || '';
+    
+    // 图片
+    const imgBox = document.getElementById('detailImgBox');
+    if(item.image_url){
+        imgBox.classList.remove('d-none');
+        document.getElementById('detailImg').src = item.image_url;
+    } else {
+        imgBox.classList.add('d-none');
+    }
+    
+    // 位置
+    const locBox = document.getElementById('detailLocBox');
+    const hasCoords = item.location_lat != null && item.location_lng != null;
+    let locText = item.location_name || (hasCoords ? `(${Number(item.location_lng).toFixed(4)}, ${Number(item.location_lat).toFixed(4)})` : '');
+    
+    if(locText){
+        locBox.classList.remove('d-none');
+        document.getElementById('detailLoc').textContent = locText;
+    } else {
+        locBox.classList.add('d-none');
+    }
+    
+    // 权限控制：是否显示“编辑”按钮
+    const todayDate = fmtDate(new Date());
+    const canEdit = item.log_time && item.log_time.startsWith(todayDate); // 仅限当天
+    
+    const footer = document.getElementById('detailFooter');
+    if(canEdit){
+        footer.classList.remove('d-none');
+        document.getElementById('detailEditBtn').onclick = () => {
+            detailModal.hide();
+            openEditMode(item);
+        };
+    } else {
+        footer.classList.add('d-none');
+    }
+
+    detailModal.show();
+}
+
+function openEditMode(item){
+  editingLogId = item.log_id;
+  document.getElementById('editorTitle').textContent = '编辑日志';
+  
+  const contentEl = document.getElementById('content');
+  const typeEl = document.getElementById('logType');
+  const emotionEl = document.getElementById('emotion');
+  const fileInput = document.getElementById('logImage');
+  
+  // 填充值
+  contentEl.value = item.content || '';
+  typeEl.value = item.log_type_raw || 'WORK';
+  emotionEl.value = item.emotion_tag_raw || '';
+  
+  // 启用编辑
+  contentEl.disabled = false;
+  typeEl.disabled = false;
+  emotionEl.disabled = false;
+  fileInput.disabled = false;
+  document.getElementById('locRefresh').disabled = false;
+  
+  // Tag 回填
+  const ids = new Set((item.tag_ids) || []);
+  document.querySelectorAll('#tagsBox .tag-select-btn').forEach(b=>{
+    const tid = parseInt(b.dataset.tagId,10);
+    if(ids.has(tid)) b.classList.add('active'); else b.classList.remove('active');
+    b.style.pointerEvents = 'auto';
+    b.style.opacity = '1';
+  });
+  
+  // 图片
+  const preview = document.getElementById('mobileImagePreview');
+  const uploadBtnText = document.querySelector('#fileUploadBtn span');
+  document.getElementById('logImage').value = '';
+  document.getElementById('mobileRemoveImage').checked = false;
+  document.querySelector('.file-upload-wrapper').classList.remove('d-none');
+
+  if(item.image_url){
+    preview.classList.remove('d-none');
+    preview.querySelector('img').src = item.image_url;
+    uploadBtnText.textContent = '更换图片';
+  }else{
+    preview.classList.add('d-none');
+    uploadBtnText.textContent = '点击上传图片';
+  }
+  
+  // 位置
+  if(item.location_name){
+      document.getElementById('locText').textContent = item.location_name;
+      currentLocation.name = item.location_name;
+      currentLocation.lat = item.location_lat;
+      currentLocation.lng = item.location_lng;
+  } else {
+      ensureLocation();
+  }
+  
+  // 按钮
+  document.querySelector('#editor .modal-footer').classList.remove('d-none');
+  document.getElementById('saveBtn').classList.remove('d-none');
+  document.getElementById('startEditBtn').classList.add('d-none');
+  
+  editor.show();
+}
+
+// 图片处理逻辑
+document.getElementById('logImage').onchange = function(e){
+    const file = e.target.files[0];
+    if(file){
+        const reader = new FileReader();
+        reader.onload = function(evt){
+            document.querySelector('#mobileImagePreview img').src = evt.target.result;
+            document.getElementById('mobileImagePreview').classList.remove('d-none');
+            document.querySelector('#fileUploadBtn span').textContent = '更换图片';
+            document.getElementById('mobileRemoveImage').checked = false;
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+document.getElementById('clearImageBtn').onclick = function(){
+    document.getElementById('logImage').value = '';
+    document.getElementById('mobileImagePreview').classList.add('d-none');
+    document.querySelector('#mobileImagePreview img').src = '';
+    document.querySelector('#fileUploadBtn span').textContent = '点击上传图片';
+    // 如果是编辑模式且原图存在，则标记为移除
+    if(editingLogId){
+        document.getElementById('mobileRemoveImage').checked = true;
+    }
+};
+
+// Offcanvas/Modal 事件监听，处理 FAB 遮挡问题
+const editorEl = document.getElementById('editor');
+editorEl.addEventListener('show.bs.modal', () => {
+    document.body.classList.add('offcanvas-open'); // Reuse class for FAB hiding
+});
+editorEl.addEventListener('hidden.bs.modal', () => {
+    document.body.classList.remove('offcanvas-open');
+});
+
+async function saveLog(){
+  const content = document.getElementById('content').value.trim();
+  if(!content){ MobileUI.toast('请填写日志内容'); return; }
+
+  const saveBtn = document.getElementById('saveBtn');
+  saveBtn.disabled = true; saveBtn.textContent = '保存中...';
+
+  // 尝试在 2 秒内完善位置信息，超时则跳过
+  try{ 
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000));
+      await Promise.race([ensureCompleteLocationBeforeSave(), timeoutPromise]);
+  }catch(_){
+      console.log('Location refinement skipped or timed out');
+  }
+  
+  const form = new FormData();
+  form.append('content', content);
+  form.append('log_type', document.getElementById('logType').value);
+  const emotion = document.getElementById('emotion').value;
+  if(emotion){ form.append('emotion_tag', emotion); }
+  selectedTagIds().forEach(id => form.append('tags', id));
+  
+  const file = document.getElementById('logImage').files[0];
+  if(file){ form.append('log_image', file); }
+  if(editingLogId && document.getElementById('mobileRemoveImage').checked){
+    form.append('remove_image', '1');
+  }
+  if(currentLocation.lat && currentLocation.lng){
+    form.append('location_lat', String(currentLocation.lat));
+    form.append('location_lng', String(currentLocation.lng));
+  }
+  if(currentLocation.name){ form.append('location_name', currentLocation.name); }
+  
+  let url, method;
+  if(editingLogId){
+    url = `${apiBase}/logs/api/${editingLogId}/update/`;
+    method = 'POST';
+  }else{
+    url = `${apiBase}/logs/api/create/`;
+    method = 'POST';
+  }
+  
+  try {
+      const res = await fetchJSON(url, { method, body: form });
+      if(res.success){ MobileUI.toast('已保存'); editor.hide(); await loadLogs(); }
+      else{ MobileUI.toast(res.message || '保存失败'); }
+  } catch(e) { MobileUI.toast('网络错误'); }
+  finally {
+      saveBtn.disabled = false; saveBtn.textContent = '保存日志';
+  }
+}
+
+async function ensureCompleteLocationBeforeSave(){
+  if(currentLocation.lat && currentLocation.lng){
+    try{
+      const j = await fetchJSON(`${apiBase}/logs/api/amap/regeo/?lng=${encodeURIComponent(currentLocation.lng)}&lat=${encodeURIComponent(currentLocation.lat)}&coordsys=gps`);
+      if(j && j.status==='1' && j.regeocode){
+        const name = composeAddrFromRegeo(j.regeocode) || '';
+        if(name){ currentLocation.name = name; }
+      }
+    }catch(_){}
+  }
+}
+
+async function delLog(id){
+  if(!confirm('确认删除该日志？')) return;
+  const res = await fetchJSON(`${apiBase}/logs/api/${id}/delete/`, { method: 'POST', body: '{}' });
+  if(res.success){ MobileUI.toast('已删除'); await loadLogs(); } else { MobileUI.toast(res.message || '删除失败'); }
+}
+
+function setLastUpdated(){
+  const el = document.getElementById('lastUpdated');
+  const d = new Date();
+  const pad = n=> (n<10?('0'+n):n);
+  el.textContent = `更新于 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+(function init(){
+  const today = fmtDate(new Date());
+  document.getElementById('dateInput').value = today;
+  document.getElementById('viewMode').onchange = () => loadLogs(1);
+  document.getElementById('query').onkeydown = (e)=>{ if(e.key==='Enter') loadLogs(1); };
+  document.getElementById('dateInput').onchange = () => loadLogs(1);
+  document.getElementById('newBtn').onclick = ()=> { openEditor(null); };
+  document.getElementById('saveBtn').onclick = saveLog;
+  document.getElementById('locRefresh').onclick = ensureLocation;
+  
+  document.getElementById('filterBtn').onclick = () => {
+      loadEmployees();
+      if(!empFilterModalInstance) empFilterModalInstance = new bootstrap.Modal(document.getElementById('empFilterModal'));
+      empFilterModalInstance.show();
+  };
+  document.getElementById('empSearch').oninput = (e) => loadEmployees(e.target.value);
+
+  loadTags().then(() => loadLogs(1));
+  MobileUI.fadeIn('#pageRoot');
+  MobileUI.bindNavFade('#pageRoot');
+})();
+</script>
+</body>
+</html>

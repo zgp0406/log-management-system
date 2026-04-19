@@ -1,0 +1,432 @@
+/* 全局样式 */
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+}
+
+.container-fluid {
+    padding: 20px;
+}
+
+/* 头部样式 */
+.header-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.page-title {
+    color: #2c3e50;
+    font-weight: 700;
+    margin: 0;
+    font-size: 2rem;
+}
+
+/* 卡片样式 */
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.95);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px 15px 0 0 !important;
+    border: none;
+    padding: 15px 20px;
+}
+
+.card-header h5 {
+    margin: 0;
+    font-weight: 600;
+}
+
+/* 员工列表样式 */
+.employee-list-card {
+    height: calc(100vh - 200px);
+    display: flex;
+    flex-direction: column;
+}
+
+.employee-search {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.employee-search input {
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    padding: 10px 15px;
+    transition: all 0.3s ease;
+}
+
+.employee-search input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.employee-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.employee-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    border: 2px solid transparent;
+}
+
+.employee-item:hover {
+    background: #e3f2fd;
+    transform: translateX(5px);
+}
+
+.employee-item.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: #5a6fd8;
+}
+
+.employee-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-size: 18px;
+    color: #2d3436;
+}
+
+.employee-item.active .employee-avatar {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.employee-info {
+    flex: 1;
+}
+
+.employee-name {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 3px;
+}
+
+.employee-work-id {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.employee-status {
+    margin-left: 10px;
+}
+
+/* 状态徽章 */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 15px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-disabled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* 员工详情卡片 */
+.employee-detail-card {
+    min-height: 600px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.form-label.required::after {
+    content: '*';
+    color: #e74c3c;
+    margin-left: 5px;
+}
+
+.form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.form-control:read-only {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+/* 按钮样式 */
+.btn {
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+}
+
+.btn-outline-primary {
+    border: 2px solid #667eea;
+    color: #667eea;
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: #667eea;
+    color: white;
+}
+
+.btn-outline-info {
+    border: 2px solid #17a2b8;
+    color: #17a2b8;
+    background: transparent;
+}
+
+.btn-outline-info:hover {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-outline-danger {
+    border: 2px solid #dc3545;
+    color: #dc3545;
+    background: transparent;
+}
+
+.btn-outline-danger:hover {
+    background: #dc3545;
+    color: white;
+}
+
+/* 编辑按钮组 */
+.edit-buttons {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.edit-buttons .btn {
+    margin-right: 10px;
+}
+
+/* 下属员工卡片 */
+.subordinates-card {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.subordinate-card {
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.subordinate-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+}
+
+/* 模态框样式 */
+.modal-content {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px 15px 0 0;
+    border: none;
+}
+
+.modal-title {
+    font-weight: 600;
+}
+
+.btn-close {
+    filter: invert(1);
+}
+
+/* Toast样式 */
+.toast {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* 表单验证样式 */
+.is-invalid {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 10px;
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+    }
+
+    .employee-list-card {
+        height: auto;
+        margin-bottom: 20px;
+    }
+
+    .employee-item {
+        padding: 10px;
+    }
+
+    .employee-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
+    }
+
+    .btn-group .btn {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+}
+
+/* 滚动条样式 */
+.employee-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.employee-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.employee-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.employee-list::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 加载动画 */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 渐入动画 */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* 卡片悬停效果 */
+.card-hover-effect {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover-effect:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* 输入框聚焦效果 */
+.form-control:focus {
+    transform: scale(1.02);
+}
+
+/* 按钮点击效果 */
+.btn:active {
+    transform: translateY(0) scale(0.98);
+}

@@ -1,0 +1,1430 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}员工管理系统{% endblock %}
+
+{% block extra_css %}
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* body样式已在base.html中定义 */
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .search-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(244, 67, 54, 0.3);
+        }
+
+        .add-employee-btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            text-decoration: none;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        th {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            font-weight: 600;
+            color: #333;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+            transform: scale(1.01);
+            transition: all 0.3s ease;
+        }
+
+        .employee-row:hover {
+            background: rgba(102, 126, 234, 0.08) !important;
+        }
+
+        .action-cell {
+            cursor: default !important;
+        }
+
+        .action-cell button {
+            cursor: pointer;
+        }
+
+        .status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4CAF50;
+        }
+
+        .status-inactive {
+            background: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+        }
+
+        .status-leave {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 3% auto;
+            padding: 0;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 700px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: modalSlideIn 0.3s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close:hover {
+            transform: scale(1.2);
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .detail-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .detail-section:last-child {
+            border-bottom: none;
+        }
+
+        .detail-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .detail-row {
+            display: flex;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+            min-width: 100px;
+            margin-right: 15px;
+        }
+
+        .detail-value {
+            color: #333;
+            flex: 1;
+        }
+
+        .roles-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            margin-right: 8px;
+            margin-top: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input[type="checkbox"] {
+            width: auto;
+            height: auto;
+            padding: 0;
+            border: none;
+            box-shadow: none;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .error-message {
+            background: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #f44336;
+        }
+
+        .success-message {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4CAF50;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state img {
+            width: 200px;
+            opacity: 0.5;
+            margin-bottom: 20px;
+        }
+
+        .manager-select {
+            position: relative;
+        }
+
+        .manager-select select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .search-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-form {
+                min-width: auto;
+            }
+
+            .form-row {
+                flex-direction: column;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            th, td {
+                padding: 10px 8px;
+                font-size: 14px;
+            }
+
+            .modal-content {
+                margin: 5% auto;
+                max-width: 95%;
+            }
+        }
+
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container" style="max-width: 1200px; margin: 0 auto; background: rgba(255, 255, 255, 0.95); border-radius: 20px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); overflow: hidden; backdrop-filter: blur(10px);">
+        <div class="header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>🏢 员工管理系统</h1>
+                    <p>高效管理企业人力资源</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            {% if error %}
+            <div class="error-message">
+                <strong>错误：</strong> {{ error }}
+            </div>
+            {% endif %}
+
+            <div class="search-section">
+                <form method="GET" class="search-form">
+                    <input type="text" name="query" value="{{ query }}" placeholder="🔍 搜索员工姓名或工号..." class="search-input">
+                    <button type="submit" class="btn btn-primary">搜索</button>
+                </form>
+                <button onclick="openAddModal()" class="btn btn-success">
+                    ➕ 添加员工
+                </button>
+            </div>
+
+            {% if employees_with_dept %}
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>工号</th>
+                            <th>姓名</th>
+                            <th>部门</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emp_data in employees_with_dept %}
+                        {% with employee=emp_data.employee %}
+                        <tr class="employee-row" data-work-id="{{ employee.work_id }}" style="cursor: pointer;">
+                            <td><strong>{{ employee.work_id }}</strong></td>
+                            <td>{{ employee.employee_name }}</td>
+                            <td>{{ emp_data.department_name }}</td>
+                            <td>
+                                <span class="status {% if employee.status == 'ACTIVE' %}status-active{% elif employee.status == 'LEAVE' %}status-leave{% else %}status-inactive{% endif %}">
+                                    {% if employee.status == 'ACTIVE' %}在职
+                                    {% elif employee.status == 'LEAVE' %}请假
+                                    {% else %}禁用
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td class="action-cell" onclick="event.stopPropagation();">
+                                <button onclick="editEmployee('{{ employee.work_id }}')" class="btn btn-primary" style="margin-right: 10px; background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%); color: white;">
+                                    ✏️ 编辑
+                                </button>
+                                <button onclick="deleteEmployee('{{ employee.work_id }}')" class="btn btn-danger">
+                                    🗑️ 删除
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div style="font-size: 4rem; margin-bottom: 20px;">👥</div>
+                <h3>暂无员工数据</h3>
+                <p>{% if query %}未找到匹配 "{{ query }}" 的员工{% else %}还没有添加任何员工{% endif %}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 编辑员工模态框 -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ 编辑员工信息</h2>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="editEmployeeForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_work_id" name="work_id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_employee_name">姓名 *</label>
+                            <input type="text" id="edit_employee_name" name="employee_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_email">邮箱</label>
+                            <input type="email" id="edit_email" name="email">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_phone_number">电话</label>
+                            <input type="tel" id="edit_phone_number" name="phone_number">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_department_id">部门</label>
+                            <select id="edit_department_id" name="department_id" onchange="updateEditManagerOptions(window.currentEditWorkId)">
+                                <option value="">请选择部门（可选）</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.department_id }}">{{ dept.department_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_position">职位</label>
+                            <input type="text" id="edit_position" name="position">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_join_date">入职日期</label>
+                            <input type="date" id="edit_join_date" name="join_date">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_status">状态</label>
+                            <select id="edit_status" name="status">
+                                <option value="ACTIVE">在职</option>
+                                <option value="LEAVE">请假</option>
+                            </select>
+                        </div>
+                        <div class="form-group manager-select">
+                            <label for="edit_manager_id">上级员工</label>
+                            <select id="edit_manager_id" name="manager_id">
+                                <option value="">请选择上级员工（可选）</option>
+                                <optgroup label="Boss（CEO+管理员）" id="edit_boss_group">
+                                    {% for boss in boss_employees %}
+                                    <option value="{{ boss.work_id }}" data-is-boss="true">{{ boss.employee_name }} ({{ boss.work_id }}) [Boss]</option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="部门员工" id="edit_department_group">
+                                    <!-- 根据选择的部门动态加载 -->
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><input type="checkbox" id="edit_is_admin" name="is_admin" onchange="toggleEditPermissions(this)"> 是否为管理员</label>
+                            <small style="color: #666; display: block; margin-top: 5px;">管理员拥有查看所有任务和日志的权限</small>
+                        </div>
+                    </div>
+
+                    <div class="form-row" style="background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label style="font-weight: 600; margin-bottom: 10px; display: block; color: #667eea;">详细权限设置</label>
+                            <div style="display: flex; gap: 20px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="checkbox" id="edit_can_view_all_tasks" name="can_view_all_tasks" onchange="checkEditAdminState()"> 
+                                    <span style="margin-left: 8px;">查看所有任务</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="checkbox" id="edit_can_view_all_logs" name="can_view_all_logs" onchange="checkEditAdminState()"> 
+                                    <span style="margin-left: 8px;">查看所有日志</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 30px;">
+                        <button type="submit" class="btn btn-success" style="margin-right: 10px;">
+                            ✅ 保存修改
+                        </button>
+                        <button type="button" onclick="closeEditModal()" class="btn" style="background: #6c757d; color: white;">
+                            ❌ 取消
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 员工详情模态框 -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>👤 员工详细信息</h2>
+                <span class="close" onclick="closeDetailModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="detailModalBody" style="padding: 30px;">
+                <div style="text-align: center; padding: 20px;">
+                    <div class="spinner"></div>
+                    <p>加载中...</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 添加员工模态框 -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>➕ 添加新员工</h2>
+                <span class="close" onclick="closeAddModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="addEmployeeForm">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="work_id">工号 *</label>
+                            <input type="text" id="work_id" name="work_id" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="employee_name">姓名 *</label>
+                            <input type="text" id="employee_name" name="employee_name" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email">邮箱</label>
+                            <input type="email" id="email" name="email">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone_number">电话</label>
+                            <input type="tel" id="phone_number" name="phone_number">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="department_id">部门</label>
+                            <select id="department_id" name="department_id" onchange="updateManagerOptions()">
+                                <option value="">请选择部门（可选）</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.department_id }}">{{ dept.department_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="position">职位</label>
+                            <input type="text" id="position" name="position">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="join_date">入职日期</label>
+                            <input type="date" id="join_date" name="join_date">
+                        </div>
+                        <div class="form-group">
+                            <label for="status">状态</label>
+                            <select id="status" name="status">
+                                <option value="ACTIVE">在职</option>
+                                <option value="LEAVE">请假</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group manager-select">
+                        <label for="manager_id">上级员工</label>
+                        <select id="manager_id" name="manager_id" onchange="updateRoleHint(this.value)">
+                            <option value="">请选择上级员工（可选）</option>
+                            <optgroup label="Boss（CEO+管理员）" id="boss_group">
+                                {% for boss in boss_employees %}
+                                <option value="{{ boss.work_id }}" data-is-boss="true">{{ boss.employee_name }} ({{ boss.work_id }}) [Boss]</option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="部门员工" id="department_group">
+                                <!-- 根据选择的部门动态加载 -->
+                            </optgroup>
+                        </select>
+                        <div id="roleHint" style="margin-top: 8px; padding: 10px; border-radius: 5px; background: #f0f7ff; border-left: 3px solid #667eea; display: none;">
+                            <small style="color: #667eea; font-weight: 600;">
+                                <i class="fas fa-info-circle"></i> 
+                                <span id="roleHintText">选择上级后，系统将自动分配角色</span>
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><input type="checkbox" id="is_admin" name="is_admin" onchange="toggleAddPermissions(this)"> 是否为管理员</label>
+                            <small style="color: #666; display: block; margin-top: 5px;">管理员拥有查看所有任务和日志的权限</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row" style="background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label style="font-weight: 600; margin-bottom: 10px; display: block; color: #667eea;">详细权限设置</label>
+                            <div style="display: flex; gap: 20px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="checkbox" id="can_view_all_tasks" name="can_view_all_tasks" onchange="checkAddAdminState()"> 
+                                    <span style="margin-left: 8px;">查看所有任务</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="checkbox" id="can_view_all_logs" name="can_view_all_logs" onchange="checkAddAdminState()"> 
+                                    <span style="margin-left: 8px;">查看所有日志</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 30px;">
+                        <button type="submit" class="btn btn-success" style="margin-right: 10px;">
+                            ✅ 添加员工
+                        </button>
+                        <button type="button" onclick="closeAddModal()" class="btn" style="background: #6c757d; color: white;">
+                            ❌ 取消
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // 更新上级员工选项（根据部门筛选）
+        function updateManagerOptions() {
+            const departmentId = document.getElementById('department_id').value;
+            const managerSelect = document.getElementById('manager_id');
+            const departmentGroup = document.getElementById('department_group');
+            
+            // 保留Boss组和默认选项
+            const bossGroup = document.getElementById('boss_group').cloneNode(true);
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '请选择上级员工（可选）';
+            
+            // 清空并重新填充
+            managerSelect.innerHTML = '';
+            managerSelect.appendChild(defaultOption);
+            managerSelect.appendChild(bossGroup);
+            managerSelect.appendChild(departmentGroup);
+            
+            // 如果选择了部门，加载该部门的员工
+            if (departmentId) {
+                fetch(`/employee_list/department_employees/?department_id=${departmentId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log('DEBUG: 获取部门员工响应:', data);
+                        departmentGroup.innerHTML = '';
+                        if (data.success && data.employees && data.employees.length > 0) {
+                            data.employees.forEach(emp => {
+                                const option = document.createElement('option');
+                                option.value = emp.work_id;
+                                option.textContent = `${emp.employee_name} (${emp.work_id})`;
+                                departmentGroup.appendChild(option);
+                            });
+                        } else {
+                            // 如果没有员工或请求失败，显示提示
+                            const option = document.createElement('option');
+                            option.value = '';
+                            option.textContent = data.success && data.employees ? '该部门暂无符合条件的员工' : '加载失败，请重试';
+                            option.disabled = true;
+                            departmentGroup.appendChild(option);
+                        }
+                        // 重新绑定上级选择的onchange事件
+                        managerSelect.onchange = function() {
+                            updateRoleHint(this.value);
+                        };
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            } else {
+                // 未选择部门时，显示所有在职员工
+                departmentGroup.innerHTML = '';
+                fetch(`/employee_list/department_employees/`)
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log('DEBUG: 获取所有员工响应:', data);
+                        departmentGroup.innerHTML = '';
+                        if (data.success && data.employees && data.employees.length > 0) {
+                            data.employees.forEach(emp => {
+                                const option = document.createElement('option');
+                                option.value = emp.work_id;
+                                option.textContent = `${emp.employee_name} (${emp.work_id})`;
+                                departmentGroup.appendChild(option);
+                            });
+                        } else {
+                            // 如果没有员工，显示提示
+                            const option = document.createElement('option');
+                            option.value = '';
+                            option.textContent = '暂无可选员工';
+                            option.disabled = true;
+                            departmentGroup.appendChild(option);
+                        }
+                        // 重新绑定上级选择的onchange事件
+                        managerSelect.onchange = function() {
+                            updateRoleHint(this.value);
+                        };
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }
+        }
+
+        // 更新角色提示（根据选择的上级）
+        function updateRoleHint(managerWorkId) {
+            const roleHint = document.getElementById('roleHint');
+            const roleHintText = document.getElementById('roleHintText');
+            
+            if (!managerWorkId) {
+                roleHint.style.display = 'none';
+                return;
+            }
+            
+            // 获取上级的角色信息
+            fetch(`/employee_list/manager_role/?work_id=${encodeURIComponent(managerWorkId)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (data.new_employee_role_id) {
+                            // 获取角色名称
+                            const roleNames = {
+                                3: '部门主管',
+                                4: '团队长',
+                                5: '员工'
+                            };
+                            const roleName = roleNames[data.new_employee_role_id] || `角色${data.new_employee_role_id}`;
+                            roleHintText.textContent = `上级角色：${data.role_name} → 新员工将自动分配角色：${roleName}`;
+                            roleHint.style.display = 'block';
+                            roleHint.style.background = '#f0f7ff';
+                            roleHint.style.borderLeftColor = '#667eea';
+                        } else if (data.manager_role_id === null || data.role_name === '未分配角色') {
+                            // 上级没有角色
+                            roleHintText.textContent = '⚠️ 该上级员工未分配角色，新员工将不会自动分配角色，需要后续手动分配';
+                            roleHint.style.display = 'block';
+                            roleHint.style.background = '#fff3cd';
+                            roleHint.style.borderLeftColor = '#ffc107';
+                        } else if (data.can_be_manager === false) {
+                            // 上级不能成为上级（角色5）
+                            roleHintText.textContent = '⚠️ 该员工不能成为上级（普通员工）';
+                            roleHint.style.display = 'block';
+                            roleHint.style.background = '#fff3cd';
+                            roleHint.style.borderLeftColor = '#ffc107';
+                        } else {
+                            roleHint.style.display = 'none';
+                        }
+                    } else {
+                        roleHint.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    roleHint.style.display = 'none';
+                });
+        }
+
+        // 更新编辑表单的上级员工选项
+        function updateEditManagerOptions(excludeWorkId) {
+            const departmentId = document.getElementById('edit_department_id').value;
+            const managerSelect = document.getElementById('edit_manager_id');
+            const departmentGroup = document.getElementById('edit_department_group');
+            
+            // 保留Boss组和默认选项
+            const bossGroup = document.getElementById('edit_boss_group').cloneNode(true);
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '请选择上级员工（可选）';
+            
+            // 清空并重新填充
+            const currentValue = managerSelect.value;
+            managerSelect.innerHTML = '';
+            managerSelect.appendChild(defaultOption);
+            managerSelect.appendChild(bossGroup);
+            managerSelect.appendChild(departmentGroup);
+            
+            // 构建URL参数
+            let url = '/employee_list/department_employees/?';
+            if (departmentId) {
+                url += `department_id=${departmentId}`;
+            }
+            if (excludeWorkId) {
+                url += (departmentId ? '&' : '') + `exclude_work_id=${excludeWorkId}`;
+            }
+            
+            // 加载员工列表
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.employees) {
+                        departmentGroup.innerHTML = '';
+                        data.employees.forEach(emp => {
+                            const option = document.createElement('option');
+                            option.value = emp.work_id;
+                            option.textContent = `${emp.employee_name} (${emp.work_id})`;
+                            departmentGroup.appendChild(option);
+                        });
+                        
+                        if (data.employees.length === 0) {
+                            const option = document.createElement('option');
+                            option.value = '';
+                            option.textContent = departmentId ? '该部门暂无员工' : '暂无可选员工';
+                            option.disabled = true;
+                            departmentGroup.appendChild(option);
+                        }
+                    }
+                    
+                    // 恢复之前选择的值
+                    if (currentValue) {
+                        managerSelect.value = currentValue;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        // 打开添加员工模态框
+        function openAddModal() {
+            updateManagerOptions(); // 加载上级员工选项（包含boss和所有员工）
+            // 重置角色提示
+            document.getElementById('roleHint').style.display = 'none';
+            // 重新绑定上级选择的onchange事件（因为updateManagerOptions可能会重新创建select内容）
+            setTimeout(() => {
+                const managerSelect = document.getElementById('manager_id');
+                if (managerSelect) {
+                    managerSelect.onchange = function() {
+                        updateRoleHint(this.value);
+                    };
+                }
+            }, 100);
+            document.getElementById('addModal').style.display = 'block';
+        }
+
+        // 关闭添加员工模态框
+        function closeAddModal() {
+            document.getElementById('addModal').style.display = 'none';
+            document.getElementById('addEmployeeForm').reset();
+        }
+
+
+        // 添加员工表单提交
+        document.getElementById('addEmployeeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const csrfToken = getCookie('csrftoken');
+
+            // 验证上级员工ID是否存在（如果选择了的话）
+            const managerId = formData.get('manager_id');
+            if (managerId) {
+                const managerSelect = document.getElementById('manager_id');
+                const selectedOption = managerSelect.querySelector(`option[value="${managerId}"]`);
+                if (!selectedOption || selectedOption.value === '') {
+                    alert('❌ 请选择有效的上级员工');
+                    return;
+                }
+            }
+
+            fetch('/employee_list/add', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ 员工添加成功！');
+                    closeAddModal();
+                    location.reload();
+                } else {
+                    alert('❌ 添加失败：' + (data.message || '未知错误'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('❌ 网络错误，请重试');
+            });
+        });
+
+        // 权限联动逻辑
+        function toggleAddPermissions(adminCheckbox) {
+            const tasks = document.getElementById('can_view_all_tasks');
+            const logs = document.getElementById('can_view_all_logs');
+            if (adminCheckbox.checked) {
+                tasks.checked = true;
+                logs.checked = true;
+            } else {
+                tasks.checked = false;
+                logs.checked = false;
+            }
+        }
+
+        function checkAddAdminState() {
+            const admin = document.getElementById('is_admin');
+            const tasks = document.getElementById('can_view_all_tasks');
+            const logs = document.getElementById('can_view_all_logs');
+            if (tasks.checked && logs.checked) {
+                admin.checked = true;
+            } else {
+                admin.checked = false;
+            }
+        }
+
+        function toggleEditPermissions(adminCheckbox) {
+            const tasks = document.getElementById('edit_can_view_all_tasks');
+            const logs = document.getElementById('edit_can_view_all_logs');
+            if (adminCheckbox.checked) {
+                tasks.checked = true;
+                logs.checked = true;
+            } else {
+                tasks.checked = false;
+                logs.checked = false;
+            }
+        }
+
+        function checkEditAdminState() {
+            const admin = document.getElementById('edit_is_admin');
+            const tasks = document.getElementById('edit_can_view_all_tasks');
+            const logs = document.getElementById('edit_can_view_all_logs');
+            if (tasks.checked && logs.checked) {
+                admin.checked = true;
+            } else {
+                admin.checked = false;
+            }
+        }
+
+        // 删除员工
+        function deleteEmployee(workId) {
+            if (confirm('⚠️ 确定要删除工号为 ' + workId + ' 的员工吗？此操作不可撤销！')) {
+                const csrfToken = getCookie('csrftoken');
+
+                fetch('/employee_list/delete/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: 'work_id=' + encodeURIComponent(workId)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✅ 员工删除成功！');
+                        location.reload();
+                    } else {
+                        alert('❌ 删除失败：' + (data.message || '未知错误'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('❌ 网络错误，请重试');
+                });
+            }
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+N 添加员工
+            if (e.ctrlKey && e.key === 'n') {
+                e.preventDefault();
+                openAddModal();
+            }
+            // ESC 关闭模态框
+            if (e.key === 'Escape') {
+                closeAddModal();
+                closeEditModal();
+                closeDetailModal();
+            }
+        });
+
+        // 编辑员工功能
+        function editEmployee(workId) {
+            const csrfToken = getCookie('csrftoken');
+            
+            // 加载员工数据
+            fetch(`/employee_list/get/?work_id=${encodeURIComponent(workId)}`, {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const emp = data.employee;
+                    
+                    // 填充表单
+                    document.getElementById('edit_work_id').value = emp.work_id;
+                    document.getElementById('edit_employee_name').value = emp.employee_name;
+                    document.getElementById('edit_email').value = emp.email;
+                    document.getElementById('edit_phone_number').value = emp.phone_number;
+                    document.getElementById('edit_department_id').value = emp.department_id;
+                    document.getElementById('edit_position').value = emp.position;
+                    document.getElementById('edit_join_date').value = emp.join_date;
+                    document.getElementById('edit_status').value = emp.status;
+                    document.getElementById('edit_is_admin').checked = emp.is_admin;
+                    
+                    // 填充权限字段
+                    document.getElementById('edit_can_view_all_tasks').checked = emp.can_view_all_tasks;
+                    document.getElementById('edit_can_view_all_logs').checked = emp.can_view_all_logs;
+                    
+                    // 保存当前编辑的员工工号到全局变量
+                    window.currentEditWorkId = workId;
+                    
+                    // 更新上级员工选项（排除当前员工）
+                    // 先设置部门，然后更新上级选项
+                    setTimeout(() => {
+                        updateEditManagerOptions(workId);
+                        if (emp.manager_id) {
+                            document.getElementById('edit_manager_id').value = emp.manager_id;
+                        }
+                    }, 100);
+                    
+                    // 显示编辑模态框
+                    document.getElementById('editModal').style.display = 'block';
+                } else {
+                    alert('❌ 加载员工信息失败：' + (data.message || '未知错误'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('❌ 网络错误，请重试');
+            });
+        }
+
+
+        // 关闭编辑员工模态框
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            document.getElementById('editEmployeeForm').reset();
+        }
+
+        // 编辑员工表单提交
+        document.getElementById('editEmployeeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const csrfToken = getCookie('csrftoken');
+            const workId = formData.get('work_id');
+
+            // 验证上级员工不能是自己
+            const managerId = formData.get('manager_id');
+            if (managerId === workId) {
+                alert('❌ 不能将自己设为上级');
+                return;
+            }
+
+            fetch('/employee_list/update/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ 员工信息更新成功！');
+                    closeEditModal();
+                    location.reload();
+                } else {
+                    alert('❌ 更新失败：' + (data.message || '未知错误'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('❌ 网络错误，请重试');
+            });
+        });
+
+        // 点击模态框外部关闭（同时支持添加、编辑和详情模态框）
+        window.onclick = function(event) {
+            const addModal = document.getElementById('addModal');
+            const editModal = document.getElementById('editModal');
+            const detailModal = document.getElementById('detailModal');
+            if (event.target == addModal) {
+                closeAddModal();
+            }
+            if (event.target == editModal) {
+                closeEditModal();
+            }
+            if (event.target == detailModal) {
+                closeDetailModal();
+            }
+        }
+
+        // 存储当前查看详情的员工工号
+        let currentDetailWorkId = null;
+
+        // 行点击事件：显示员工详情
+        document.addEventListener('DOMContentLoaded', function() {
+            const rows = document.querySelectorAll('.employee-row');
+            rows.forEach(row => {
+                row.addEventListener('click', function(e) {
+                    // 如果点击的是操作列，不触发
+                    if (e.target.closest('.action-cell')) {
+                        return;
+                    }
+                    const workId = this.getAttribute('data-work-id');
+                    if (workId) {
+                        showEmployeeDetail(workId);
+                    }
+                });
+            });
+        });
+
+        // 显示员工详情
+        function showEmployeeDetail(workId) {
+            currentDetailWorkId = workId;
+            const modal = document.getElementById('detailModal');
+            const modalBody = document.getElementById('detailModalBody');
+            
+            // 显示加载状态
+            modalBody.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <div class="spinner"></div>
+                    <p>加载中...</p>
+                </div>
+            `;
+            modal.style.display = 'block';
+
+            // 获取员工详情
+            fetch(`/employee_list/detail/?work_id=${encodeURIComponent(workId)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const emp = data.employee;
+                        modalBody.innerHTML = `
+                            <div class="detail-section">
+                                <h3>基本信息</h3>
+                                <div class="detail-row">
+                                    <span class="detail-label">工号：</span>
+                                    <span class="detail-value"><strong>${escapeHtml(emp.work_id)}</strong></span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">姓名：</span>
+                                    <span class="detail-value">${escapeHtml(emp.employee_name)}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">邮箱：</span>
+                                    <span class="detail-value">${escapeHtml(emp.email)}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">电话：</span>
+                                    <span class="detail-value">${escapeHtml(emp.phone_number)}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">部门：</span>
+                                    <span class="detail-value">${escapeHtml(emp.department_name)}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">职位：</span>
+                                    <span class="detail-value">${escapeHtml(emp.position)}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">入职日期：</span>
+                                    <span class="detail-value">${escapeHtml(emp.join_date)}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">状态：</span>
+                                    <span class="detail-value">
+                                        <span class="status ${emp.status === 'ACTIVE' ? 'status-active' : (emp.status === 'LEAVE' ? 'status-leave' : 'status-inactive')}">
+                                            ${escapeHtml(emp.status_display)}
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <h3>组织信息</h3>
+                                <div class="detail-row">
+                                    <span class="detail-label">上级：</span>
+                                    <span class="detail-value">${escapeHtml(emp.manager_name)}${emp.manager_work_id ? ' (' + escapeHtml(emp.manager_work_id) + ')' : ''}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">角色：</span>
+                                    <span class="detail-value">
+                                        ${emp.roles && emp.roles.length > 0 
+                                            ? emp.roles.map(role => `<span class="roles-badge">${escapeHtml(role)}</span>`).join('')
+                                            : '<span style="color: #999;">无</span>'}
+                                    </span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">权限：</span>
+                                    <span class="detail-value">
+                                        ${emp.is_admin ? '<span class="roles-badge" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);">管理员</span>' : ''}
+                                        ${emp.can_view_all_tasks ? '<span class="roles-badge" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">查看所有任务</span>' : ''}
+                                        ${emp.can_view_all_logs ? '<span class="roles-badge" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">查看所有日志</span>' : ''}
+                                        ${!emp.is_admin && !emp.can_view_all_tasks && !emp.can_view_all_logs ? '<span style="color: #999;">无特殊权限</span>' : ''}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        modalBody.innerHTML = `
+                            <div style="text-align: center; padding: 20px; color: #f44336;">
+                                <p>❌ 加载失败：${escapeHtml(data.message || '未知错误')}</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    modalBody.innerHTML = `
+                        <div style="text-align: center; padding: 20px; color: #f44336;">
+                            <p>❌ 网络错误，请重试</p>
+                        </div>
+                    `;
+                });
+        }
+
+        // 关闭详情模态框
+        function closeDetailModal() {
+            document.getElementById('detailModal').style.display = 'none';
+            currentDetailWorkId = null;
+        }
+
+        // 从详情模态框编辑员工
+        function editEmployeeFromDetail() {
+            if (currentDetailWorkId) {
+                closeDetailModal();
+                setTimeout(() => {
+                    editEmployee(currentDetailWorkId);
+                }, 300);
+            }
+        }
+
+        // 从详情模态框删除员工
+        function deleteEmployeeFromDetail() {
+            if (currentDetailWorkId) {
+                closeDetailModal();
+                setTimeout(() => {
+                    deleteEmployee(currentDetailWorkId);
+                }, 300);
+            }
+        }
+
+        // HTML转义函数
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 搜索框自动聚焦
+        document.querySelector('.search-input').focus();
+    </script>
+{% endblock %}

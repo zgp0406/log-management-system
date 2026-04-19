@@ -1,0 +1,1194 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}个人资料 - {{ employee.employee_name }}{% endblock %}
+
+{% block extra_head %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #06b6d4;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --dark-color: #1f2937;
+            --light-color: #f8fafc;
+            --border-radius: 12px;
+            --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --box-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* body样式已在base.html中定义 */
+
+        .main-container {
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .content-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header-section {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.04);
+            padding: 40px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .header-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-title i {
+            color: var(--primary-color);
+        }
+
+        .header-subtitle {
+            color: #6b7280;
+            font-size: 1.1rem;
+            margin-bottom: 0;
+        }
+
+        .top-right-btn {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: var(--box-shadow);
+        }
+
+        .top-right-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--box-shadow-lg);
+            color: white;
+        }
+
+        .employee-switch-section {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+        }
+
+        .form-select {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background-color: #f9fafb;
+        }
+
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            background-color: white;
+        }
+
+        .profile-section {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            margin-bottom: 0;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .profile-section:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 25px;
+            position: relative;
+        }
+
+        .profile-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .profile-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .profile-table {
+            margin: 0;
+            border: none;
+        }
+
+        .profile-table tr {
+            border-bottom: 1px solid #f3f4f6;
+            transition: background-color 0.2s ease;
+        }
+
+        .profile-table tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .profile-table tr:last-child {
+            border-bottom: none;
+        }
+
+        .profile-table th {
+            background-color: #f9fafb;
+            border: none;
+            padding: 18px 25px;
+            font-weight: 600;
+            color: var(--dark-color);
+            width: 200px;
+            position: relative;
+        }
+
+        .profile-table th::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 1px;
+            height: 60%;
+            background: #e5e7eb;
+        }
+
+        .profile-table td {
+            border: none;
+            padding: 18px 25px;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .action-section {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .btn-subordinates {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            border: none;
+            color: white;
+            padding: 14px 32px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: var(--box-shadow);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-subordinates:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--box-shadow-lg);
+            color: white;
+        }
+
+        .modal-content {
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-lg);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-bottom: none;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            padding: 20px 25px;
+        }
+
+        .modal-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-close {
+            filter: brightness(0) invert(1);
+            opacity: 0.8;
+        }
+
+        .btn-close:hover {
+            opacity: 1;
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .subordinate-table {
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+
+        .subordinate-table thead th {
+            background: #f9fafb;
+            border: none;
+            padding: 15px 20px;
+            font-weight: 600;
+            color: var(--dark-color);
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .subordinate-table tbody td {
+            border: none;
+            padding: 15px 20px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .subordinate-table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .subordinate-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .subordinate-table .btn-action {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .subordinate-table .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+            color: white;
+        }
+
+        .d-grid.gap-3 button {
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .d-grid.gap-3 button:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .d-grid.gap-3 button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* 日志列表样式 */
+        .log-item-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .log-item-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .log-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .log-item-meta {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .log-type-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .log-type-work { background: #dbeafe; color: #1e40af; }
+        .log-type-meeting { background: #fef3c7; color: #92400e; }
+        .log-type-communication { background: #e0e7ff; color: #3730a3; }
+        .log-type-development { background: #dcfce7; color: #166534; }
+        .log-type-study { background: #fce7f3; color: #9f1239; }
+
+        .emotion-badge {
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .log-tags {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .log-tag {
+            padding: 2px 8px;
+            background: #f0f9ff;
+            color: #0369a1;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            border: 1px solid #bae6fd;
+        }
+
+        .log-content-text {
+            color: #374151;
+            line-height: 1.6;
+            margin-top: 10px;
+        }
+
+        .log-time {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .modal-xl {
+            max-width: 900px;
+        }
+
+        #logsListContainer {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 15px;
+        }
+
+        .empty-logs {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-logs i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b7280;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #d1d5db;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 15px;
+            }
+
+            .header-section {
+                padding: 20px;
+            }
+
+            .header-title {
+                font-size: 2rem;
+            }
+
+            .top-right-btn {
+                position: static;
+                margin-top: 20px;
+                display: inline-block;
+            }
+
+            .profile-table th,
+            .profile-table td {
+                padding: 12px 15px;
+            }
+
+            .profile-table th {
+                width: auto;
+                min-width: 120px;
+            }
+
+            .modal-dialog {
+                margin: 10px;
+            }
+
+            .subordinate-table {
+                font-size: 0.9rem;
+            }
+
+            .subordinate-table th,
+            .subordinate-table td {
+                padding: 10px 12px;
+            }
+        }
+
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #3730a3, #0891b2);
+        }
+
+        /* 动画效果 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .employee-switch-section,
+        .profile-section {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .profile-section {
+            animation-delay: 0.1s;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="main-container" style="min-height: 100vh; padding: 20px;">
+        <div class="content-wrapper">
+            <!-- 页面标题区域 -->
+            <div class="header-section">
+                <h1 class="header-title">
+                    <i class="fas fa-user-circle"></i>
+                    员工个人资料
+                </h1>
+                <p class="header-subtitle">查看和管理员工详细信息</p>
+            </div>
+
+            <!-- 个人资料卡片区域 -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 24px;">
+                <!-- 头像和信息卡片 -->
+                <div class="profile-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                    <div style="text-align: center; padding: 30px 20px;">
+                        <div style="width: 120px; height: 120px; margin: 0 auto 20px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; border: 4px solid rgba(255, 255, 255, 0.3);">
+                            {{ employee.employee_name|first|upper }}
+                        </div>
+                        <h2 style="font-size: 1.75rem; font-weight: 700; margin: 0 0 8px; color: white;">{{ employee.employee_name }}</h2>
+                        <p style="font-size: 1rem; opacity: 0.9; margin: 0 0 20px;">工号: {{ employee.work_id }}</p>
+                        <div style="display: inline-block; padding: 6px 16px; background: {% if employee.status == 'ACTIVE' %}rgba(34, 197, 94, 0.3){% else %}rgba(239, 68, 68, 0.3){% endif %}; border-radius: 20px; font-size: 0.875rem; font-weight: 600; color: {% if employee.status == 'ACTIVE' %}#22c55e{% else %}#ef4444{% endif %};">
+                            {% if employee.status == 'ACTIVE' %}在职{% else %}请假{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 基本信息卡片 -->
+                <div class="profile-section">
+                    <div class="profile-header" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); color: var(--primary-color); padding: 20px 25px;">
+                        <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-info-circle"></i>
+                            基本信息
+                        </h3>
+                    </div>
+                    <div style="padding: 25px;">
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8fafc; border-radius: 8px; transition: all 0.3s;">
+                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 4px;">邮箱</div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">{{ employee.email|default:"未填写" }}</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8fafc; border-radius: 8px;">
+                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+                                    <i class="fas fa-phone"></i>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 4px;">电话</div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">{{ employee.phone_number|default:"未填写" }}</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8fafc; border-radius: 8px;">
+                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+                                    <i class="fas fa-briefcase"></i>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 4px;">职位</div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">{{ employee.position|default:"未填写" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 工作信息卡片 -->
+                <div class="profile-section">
+                    <div class="profile-header" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e; padding: 20px 25px;">
+                        <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-building"></i>
+                            工作信息
+                        </h3>
+                    </div>
+                    <div style="padding: 25px;">
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8fafc; border-radius: 8px;">
+                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 4px;">部门</div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">{{ department_name|default:"未分配" }}</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8fafc; border-radius: 8px;">
+                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 4px;">入职日期</div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">{{ employee.join_date|default:"未填写" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作按钮区域 -->
+            <div class="profile-section" style="background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); padding: 30px;">
+                <div style="text-align: center; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn btn-subordinates" onclick="viewSubordinates('{{ employee.work_id }}')" style="flex: 0 0 auto;">
+                        <i class="fas fa-sitemap"></i>
+                        查看下属员工
+                    </button>
+                    <button class="btn btn-subordinates" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);" onclick="openEditProfile()">
+                        <i class="fas fa-user-edit"></i>
+                        编辑个人资料
+                    </button>
+                    <button class="btn btn-subordinates" style="background: linear-gradient(135deg, #9333ea, #7e22ce);" onclick="openChangePassword()">
+                        <i class="fas fa-key"></i>
+                        修改密码
+                    </button>
+                    <a href="{% url 'login_app:employee_logout' %}" class="btn btn-subordinates" style="background: linear-gradient(135deg, #ef4444, #dc2626); text-decoration: none;" onclick="return confirm('确定要退出登录吗？')">
+                        <i class="fas fa-sign-out-alt"></i>
+                        退出登录
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑资料 Modal -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i>编辑个人资料</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">邮箱</label>
+                        <input id="editEmail" class="form-control" value="{{ employee.email }}" placeholder="请输入邮箱">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">电话</label>
+                        <input id="editPhone" class="form-control" value="{{ employee.phone_number }}" placeholder="请输入手机号">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitProfile()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改密码 Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-purple text-white" style="background:#7c3aed;">
+                    <h5 class="modal-title"><i class="fas fa-key me-2"></i>修改密码</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">原密码</label>
+                        <input id="oldPwd" type="password" class="form-control" placeholder="请输入原密码">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">新密码</label>
+                        <input id="newPwd" type="password" class="form-control" placeholder="请输入新密码">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitPassword()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 下属员工弹窗 -->
+    <div class="modal fade" id="subordinateModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-users"></i>
+                        下属员工列表
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table subordinate-table" id="subordinateTable">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-user me-2"></i>姓名</th>
+                                <th><i class="fas fa-id-badge me-2"></i>工号</th>
+                                <th><i class="fas fa-briefcase me-2"></i>职位</th>
+                                <th><i class="fas fa-circle me-2"></i>状态</th>
+                                <th><i class="fas fa-cogs me-2"></i>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 下属员工数据将在这里动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 下属日志展示模态框 -->
+    <div class="modal fade" id="subordinateLogsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-book me-2"></i>
+                        <span id="logsEmployeeName">员工日志</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- 日期筛选 -->
+                    <div class="mb-3">
+                        <label class="form-label">选择日期：</label>
+                        <input type="date" id="logDateFilter" class="form-control" onchange="loadSubordinateLogs()">
+                    </div>
+                    
+                    <!-- 日志统计 -->
+                    <div class="alert alert-info d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-info-circle me-2"></i>共 <strong id="logsTotalCount">0</strong> 条日志</span>
+                        <span id="logsDateDisplay"></span>
+                    </div>
+                    
+                    <!-- 日志列表 -->
+                    <div id="logsListContainer" style="max-height: 500px; overflow-y: auto;">
+                        <div class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                            <p class="mt-2 text-muted">加载中...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 下属三视图弹窗 -->
+    <div class="modal fade" id="subordinateViewsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content" style="border:none;border-radius:12px;overflow:hidden;">
+                <div class="modal-header" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;">
+                    <h5 class="modal-title"><i class="fas fa-calendar-alt me-2"></i><span id="subordinateViewsTitle">三视图</span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body" style="padding:0;">
+                    <iframe id="subordinateViewsFrame" src="" style="width:100%;height:700px;border:none;display:block;"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        // 获取并展示下属
+        function viewSubordinates(work_id) {
+            const tbody = document.querySelector('#subordinateTable tbody');
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center"><i class="fas fa-spinner fa-spin me-2"></i>加载中...</td></tr>';
+
+            fetch(`/employee/subordinates/?work_id=${work_id}`)
+                .then(res => res.json())
+                .then(data => {
+                    tbody.innerHTML = '';
+
+                    if (data.success) {
+                        if (data.subordinates && data.subordinates.length > 0) {
+                            data.subordinates.forEach(emp => {
+                                const statusClass = (emp.status === 'ACTIVE' || emp.status === '在职') ? 'bg-success' : 'bg-secondary';
+                                tbody.innerHTML += `
+                                    <tr>
+                                        <td>${emp.employee_name}</td>
+                                        <td>${emp.work_id}</td>
+                                        <td>${emp.position || '未填写'}</td>
+                                        <td><span class="badge ${statusClass}">${emp.status}</span></td>
+                                        <td style="white-space: nowrap;">
+                                            <button type="button" class="btn btn-success btn-sm me-2" data-action="log" data-emp-id="${emp.employee_id}" data-emp-name="${emp.employee_name}" data-work-id="${emp.work_id}" title="查看日志">
+                                                <i class="fas fa-book"></i> 日志
+                                            </button>
+                                            <button type="button" class="btn btn-info btn-sm me-2" data-action="view" data-emp-id="${emp.employee_id}" data-emp-name="${emp.employee_name}" data-work-id="${emp.work_id}" title="查看三视图">
+                                                <i class="fas fa-calendar-week"></i> 视图
+                                            </button>
+                                            <button type="button" class="btn btn-warning btn-sm" data-action="ai" data-emp-id="${emp.employee_id}" data-emp-name="${emp.employee_name}" data-work-id="${emp.work_id}" title="查看AI分析">
+                                                <i class="fas fa-brain"></i> AI
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `;
+                            });
+                            // 事件委托，避免内联 onclick 在不同浏览器环境下失效
+                            tbody.onclick = function(ev){
+                                const btn = ev.target.closest('button[data-action]');
+                                if(!btn) return;
+                                const empId = parseInt(btn.getAttribute('data-emp-id'));
+                                const name = btn.getAttribute('data-emp-name');
+                                const workId = btn.getAttribute('data-work-id');
+                                const act = btn.getAttribute('data-action');
+                                if(act==='log') viewSubordinateLogs(empId, name, workId);
+                                else if(act==='view') viewSubordinateThreeViews(empId, name, workId);
+                                else if(act==='ai') viewSubordinateAIAnalysis(empId, name, workId);
+                            };
+                        } else {
+                            tbody.innerHTML = `
+                                <tr>
+                                    <td colspan="5" class="empty-state">
+                                        <i class="fas fa-users-slash"></i>
+                                        <div>暂无下属员工</div>
+                                    </td>
+                                </tr>
+                            `;
+                        }
+
+                        var modal = new bootstrap.Modal(document.getElementById('subordinateModal'));
+                        modal.show();
+                    } else {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="5" class="text-center text-danger">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    获取下属失败: ${data.message || '未知错误'}
+                                </td>
+                            </tr>
+                        `;
+
+                        var modal = new bootstrap.Modal(document.getElementById('subordinateModal'));
+                        modal.show();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center text-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                网络错误，请稍后重试
+                            </td>
+                        </tr>
+                    `;
+
+                    var modal = new bootstrap.Modal(document.getElementById('subordinateModal'));
+                    modal.show();
+                });
+        }
+
+        // 当前选中的下属员工信息
+        let currentSubordinateEmployee = null;
+
+
+        // 查看下属日志（弹窗展示）
+        function viewSubordinateLogs(employeeId, employeeName, workId) {
+            currentSubordinateEmployee = {
+                employee_id: employeeId,
+                employee_name: employeeName,
+                work_id: workId
+            };
+            
+            // 更新日志模态框标题
+            document.getElementById('logsEmployeeName').textContent = employeeName + ' 的日志';
+            
+            // 设置默认日期为今天
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('logDateFilter').value = today;
+            document.getElementById('logsDateDisplay').textContent = '';
+            
+            // 显示日志模态框
+            const logsModal = new bootstrap.Modal(document.getElementById('subordinateLogsModal'));
+            logsModal.show();
+            
+            // 加载日志数据
+            loadSubordinateLogs();
+        }
+
+        // 加载下属日志数据
+        function loadSubordinateLogs() {
+            if (!currentSubordinateEmployee) return;
+            
+            const employeeId = currentSubordinateEmployee.employee_id;
+            const date = document.getElementById('logDateFilter').value || new Date().toISOString().split('T')[0];
+            const container = document.getElementById('logsListContainer');
+            
+            // 显示加载状态
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                    <p class="mt-2 text-muted">加载中...</p>
+                </div>
+            `;
+            
+            // 更新日期显示
+            const dateObj = new Date(date);
+            document.getElementById('logsDateDisplay').textContent = dateObj.toLocaleDateString('zh-CN', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            // 获取日志数据
+            fetch(`/employee/logs/?employee_id=${employeeId}&date=${date}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        // 更新总数
+                        document.getElementById('logsTotalCount').textContent = data.total_count || data.logs.length;
+                        
+                        // 渲染日志列表
+                        if (data.logs && data.logs.length > 0) {
+                            container.innerHTML = data.logs.map(log => {
+                                // 日志类型映射到CSS类
+                                const logTypeClassMap = {
+                                    'work': 'work',
+                                    'meeting': 'meeting',
+                                    'communication': 'communication',
+                                    'development': 'development',
+                                    'study': 'study'
+                                };
+                                const logTypeClass = logTypeClassMap[log.log_type_raw.toLowerCase()] || 'work';
+                                
+                                return `
+                                <div class="log-item-card" onclick="showLogDetail(${log.log_id})">
+                                    <div class="log-item-header">
+                                        <div class="log-item-meta">
+                                            <span class="log-type-badge log-type-${logTypeClass}">${escapeHtml(log.log_type)}</span>
+                                            ${log.emotion_tag ? `<span class="emotion-badge">${escapeHtml(log.emotion_tag)}</span>` : ''}
+                                        </div>
+                                        <span class="log-time">${escapeHtml(log.log_time)}</span>
+                                    </div>
+                                    <div class="log-content-text">${escapeHtml(log.content)}</div>
+                                    ${log.location_name ? `<div class="mt-2 text-muted"><i class="fas fa-map-marker-alt me-1"></i>${escapeHtml(log.location_name)}</div>` : ''}
+                                    ${log.image_url ? `<div class="mt-2"><img src="${log.image_url}" alt="日志图片" style="max-width:100%; border-radius:12px;"></div>` : ''}
+                                    ${log.tags && log.tags.length > 0 ? `
+                                        <div class="log-tags">
+                                            ${log.tags.map(tag => `<span class="log-tag">#${escapeHtml(tag)}</span>`).join('')}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                            }).join('');
+                        } else {
+                            container.innerHTML = `
+                                <div class="empty-logs">
+                                    <i class="fas fa-inbox"></i>
+                                    <div>该日期暂无日志记录</div>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        container.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                ${data.message || '加载失败，请重试'}
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    container.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            网络错误，请稍后重试
+                        </div>
+                    `;
+                });
+        }
+
+        // HTML转义函数
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 显示日志详情（在弹窗中展示）
+        function showLogDetail(logId) {
+            // 获取日志详情
+            fetch(`/logs/${logId}/`)
+                .then(res => res.json())
+                .then(data => {
+                    // 创建详情模态框HTML
+                    const detailHtml = `
+                        <div class="log-detail-content">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <p><strong><i class="fas fa-user me-2"></i>员工：</strong>${escapeHtml(data.employee)}</p>
+                                    <p><strong><i class="fas fa-clock me-2"></i>时间：</strong>${escapeHtml(data.log_time)}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong><i class="fas fa-tag me-2"></i>类型：</strong>${escapeHtml(data.log_type)}</p>
+                                    <p><strong><i class="fas fa-smile me-2"></i>情绪：</strong>${data.emotion_tag ? escapeHtml(data.emotion_tag) : '无'}</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="mb-3">
+                                <strong><i class="fas fa-align-left me-2"></i>日志内容：</strong>
+                                <div class="mt-2 p-3 bg-light rounded">${escapeHtml(data.content)}</div>
+                            </div>
+                            ${data.tags && data.tags.length > 0 ? `
+                                <div class="mb-3">
+                                    <strong><i class="fas fa-tags me-2"></i>标签：</strong>
+                                    <div class="mt-2">
+                                        ${data.tags.map(tag => `<span class="badge bg-primary me-2">#${escapeHtml(tag)}</span>`).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${data.location_name ? `
+                                <div class="mb-3">
+                                    <strong><i class="fas fa-map-marker-alt me-2"></i>位置：</strong>
+                                    <span>${escapeHtml(data.location_name)}</span>
+                                    ${data.location_lat && data.location_lng ? `<a href="https://uri.amap.com/marker?position=${data.location_lng},${data.location_lat}&name=${encodeURIComponent(data.location_name)}" target="_blank" class="ms-2">在高德地图中查看</a>` : ''}
+                                </div>
+                            ` : ''}
+                            ${data.image_url ? `
+                                <div class="mb-3">
+                                    <strong><i class="fas fa-image me-2"></i>图片：</strong>
+                                    <div class="mt-2"><img src="${data.image_url}" alt="日志图片" class="img-fluid rounded"></div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    
+                    // 显示详情模态框
+                    showDetailModal('日志详情', detailHtml);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('获取日志详情失败，请稍后重试');
+                });
+        }
+
+        // 显示详情模态框
+        function showDetailModal(title, content) {
+            // 创建或获取详情模态框
+            let detailModal = document.getElementById('logDetailModal');
+            if (!detailModal) {
+                // 如果不存在，创建新的模态框
+                detailModal = document.createElement('div');
+                detailModal.className = 'modal fade';
+                detailModal.id = 'logDetailModal';
+                detailModal.setAttribute('tabindex', '-1');
+                detailModal.innerHTML = `
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-info text-white">
+                                <h5 class="modal-title" id="detailModalTitle"></h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="关闭"></button>
+                            </div>
+                            <div class="modal-body" id="detailModalBody">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(detailModal);
+            }
+            
+            // 更新内容
+            document.getElementById('detailModalTitle').textContent = title;
+            document.getElementById('detailModalBody').innerHTML = content;
+            
+            // 显示模态框
+            const modal = new bootstrap.Modal(detailModal);
+            modal.show();
+        }
+
+        // 查看下属三视图（弹窗展示）
+        function viewSubordinateThreeViews(employeeId, employeeName, workId) {
+            document.getElementById('subordinateViewsTitle').textContent = `${employeeName} 的三视图`;
+            const frame = document.getElementById('subordinateViewsFrame');
+            frame.src = `/views/?employee_id=${employeeId}&embed=1`;
+            new bootstrap.Modal(document.getElementById('subordinateViewsModal')).show();
+        }
+
+        // 查看下属AI分析
+        function viewSubordinateAIAnalysis(employeeId, employeeName, workId) {
+            currentSubordinateEmployee = { employee_id: employeeId, employee_name: employeeName, work_id: workId };
+            fetch(`/ai/api/analysis/${employeeId}/`)
+                .then(r=>r.json())
+                .then(res=>{
+                    if(!res.success){ alert(res.message||'无权查看'); return; }
+                    const type = res.mbti_type || '-';
+                    const advice = (res.ai_advice||'').replace(/</g,'&lt;');
+                    const analysis = (res.mbti_analysis||'').replace(/</g,'&lt;');
+                    const html = `
+                        <div>
+                          <div class="mb-2"><strong>员工：</strong>${employeeName}</div>
+                          <div class="mb-2"><strong>MBTI类型：</strong>${type}</div>
+                          <div class="mb-3"><strong>AI建议：</strong><div class="mt-1 p-2 bg-light rounded">${advice||'暂无'}</div></div>
+                          <div class="mb-3"><strong>MBTI分析：</strong><div class="mt-1 p-2 bg-light rounded">${analysis||'暂无'}</div></div>
+                        </div>`;
+                    showDetailModal('AI 分析', html);
+                })
+                .catch(()=>alert('网络错误'));
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 可以在这里添加其他初始化逻辑
+            console.log('员工详情页面已加载完成');
+        });
+
+        function openEditProfile(){
+            new bootstrap.Modal(document.getElementById('editProfileModal')).show();
+        }
+
+        function submitProfile(){
+            const form = new URLSearchParams();
+            form.set('email', document.getElementById('editEmail').value.trim());
+            form.set('phone_number', document.getElementById('editPhone').value.trim());
+            
+            fetch('/employee/profile_update/', { method:'POST', body: form, credentials:'include' })
+              .then(r=>r.json()).then(j=>{
+                if(j.success){ location.reload(); }
+                else{ alert(j.message||'保存失败'); }
+              }).catch(()=>alert('网络错误'));
+        }
+
+        function openChangePassword(){
+            new bootstrap.Modal(document.getElementById('changePasswordModal')).show();
+        }
+
+        function submitPassword(){
+            const form = new URLSearchParams();
+            form.set('old_password', document.getElementById('oldPwd').value);
+            form.set('new_password', document.getElementById('newPwd').value);
+            fetch('/employee/change_password/', { method:'POST', body: form, credentials:'include' })
+              .then(r=>r.json()).then(j=>{
+                if(j.success){ alert('密码已修改'); document.getElementById('oldPwd').value=''; document.getElementById('newPwd').value=''; bootstrap.Modal.getInstance(document.getElementById('changePasswordModal')).hide(); }
+                else{ alert(j.message||'修改失败'); }
+              }).catch(()=>alert('网络错误'));
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代码评审报告 - 北京交通大学</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: linear-gradient(90deg, #dc143c 0%, #dc143c 20%, #1e3c72 20%, #1e3c72 100%);
+        }
+
+        .university-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .report-title {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            background: #fafafa;
+            padding: 25px;
+            border-radius: 8px;
+            border-left: 5px solid #1e3c72;
+        }
+
+        .section-title {
+            font-size: 24px;
+            color: #1e3c72;
+            margin-bottom: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '▶';
+            color: #dc143c;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #1e3c72;
+            margin-bottom: 5px;
+        }
+
+        .criteria-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .criteria-list li {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #dc143c;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .criteria-list li strong {
+            color: #1e3c72;
+        }
+
+        .issues-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .issues-table th {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .issues-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .issues-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .issues-table tr:hover {
+            background-color: #e3f2fd;
+        }
+
+        .status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .status.pending {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status.resolved {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.critical {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .priority {
+            font-weight: bold;
+        }
+
+        .priority.high {
+            color: #dc3545;
+        }
+
+        .priority.medium {
+            color: #fd7e14;
+        }
+
+        .priority.low {
+            color: #28a745;
+        }
+
+        .summary-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .footer {
+            background: #1e3c72;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .code-snippet {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .report-title {
+                font-size: 32px;
+            }
+
+            .issues-table {
+                font-size: 14px;
+            }
+
+            .issues-table th,
+            .issues-table td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="university-logo">
+                <div class="logo-text">🏛️ 北京交通大学</div>
+            </div>
+            <h1 class="report-title">代码评审报告</h1>
+            <p style="font-size: 18px; opacity: 0.9;">专业课综合实训III - 软件学院</p>
+        </header>
+
+        <div class="content">
+            <!-- 基本信息 -->
+            <section class="section">
+                <h2 class="section-title">基本信息</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">项目名称：</div>
+                        <div>企业任务管理系统 (Pandora)</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">评审日期：</div>
+                        <div>2024-11-13</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">评审人员：</div>
+                        <div>Alex (AI代码评审专家)</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">提交人（开发人员）：</div>
+                        <div>开发团队</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">变更分支/请求编号：</div>
+                        <div>feature/enterprise-management-system</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 评审范围 -->
+            <section class="section">
+                <h2 class="section-title">评审范围</h2>
+                <div class="info-item">
+                    <div class="info-label">模块/文件：</div>
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        <li><strong>dashboard/</strong> - 数据仪表板模块 (1,175行代码)</li>
+                        <li><strong>task_app/</strong> - 任务管理应用</li>
+                        <li><strong>login_app/</strong> - 用户登录系统</li>
+                        <li><strong>log_app/</strong> - 日志管理应用</li>
+                        <li><strong>pandora/</strong> - 核心框架模块</li>
+                    </ul>
+                </div>
+                <div class="info-item" style="margin-top: 15px;">
+                    <div class="info-label">变更描述：</div>
+                    <div>构建企业级任务管理系统，包含员工管理、任务分配、日志记录、数据可视化等核心功能。采用Django框架开发，实现模块化架构设计。</div>
+                </div>
+            </section>
+
+            <!-- 评审标准 -->
+            <section class="section">
+                <h2 class="section-title">评审标准</h2>
+                <ul class="criteria-list">
+                    <li><strong>逻辑正确性：</strong> 功能逻辑是否正确，业务流程是否合理</li>
+                    <li><strong>编码规范：</strong> 遵循PEP8 Python编码规范，代码风格一致性</li>
+                    <li><strong>性能：</strong> 算法效率、数据库查询优化、资源使用合理性</li>
+                    <li><strong>安全性：</strong> 输入验证、SQL注入防护、会话管理、权限控制</li>
+                    <li><strong>可维护性：</strong> 代码结构清晰、注释完整、模块化设计</li>
+                </ul>
+            </section>
+
+            <!-- 问题与修改建议 -->
+            <section class="section">
+                <h2 class="section-title">问题与修改建议</h2>
+                <table class="issues-table">
+                    <thead>
+                        <tr>
+                            <th>序号</th>
+                            <th>文件路径</th>
+                            <th>行号</th>
+                            <th>问题类型</th>
+                            <th>优先级</th>
+                            <th>问题描述</th>
+                            <th>建议修复方案</th>
+                            <th>责任人</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>dashboard/views.py</td>
+                            <td>12, 727, 763, 928, 946</td>
+                            <td>安全性</td>
+                            <td><span class="priority high">高</span></td>
+                            <td>多处使用@csrf_exempt装饰器，禁用CSRF保护</td>
+                            <td>移除@csrf_exempt，使用Django内置CSRF保护机制</td>
+                            <td>后端开发</td>
+                            <td><span class="status critical">严重</span></td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>dashboard/views.py</td>
+                            <td>959, 961</td>
+                            <td>安全性</td>
+                            <td><span class="priority high">高</span></td>
+                            <td>密码明文存储和比较，存在严重安全风险</td>
+                            <td>使用Django内置的密码哈希函数进行加密存储</td>
+                            <td>后端开发</td>
+                            <td><span class="status critical">严重</span></td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>dashboard/views.py</td>
+                            <td>248, 320, 341</td>
+                            <td>性能</td>
+                            <td><span class="priority medium">中</span></td>
+                            <td>存在大量调试print语句，影响生产环境性能</td>
+                            <td>移除调试语句，使用Django logging框架</td>
+                            <td>后端开发</td>
+                            <td><span class="status pending">待处理</span></td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>dashboard/views.py</td>
+                            <td>683, 710</td>
+                            <td>性能</td>
+                            <td><span class="priority medium">中</span></td>
+                            <td>数据库查询限制硬编码为100条，可能影响用户体验</td>
+                            <td>实现分页机制或配置化查询限制</td>
+                            <td>后端开发</td>
+                            <td><span class="status pending">待处理</span></td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>dashboard/views.py</td>
+                            <td>518</td>
+                            <td>安全性</td>
+                            <td><span class="priority medium">中</span></td>
+                            <td>新员工默认密码硬编码为'123456'</td>
+                            <td>生成随机密码并通过安全渠道发送给用户</td>
+                            <td>后端开发</td>
+                            <td><span class="status pending">待处理</span></td>
+                        </tr>
+                        <tr>
+                            <td>6</td>
+                            <td>dashboard/views.py</td>
+                            <td>109, 123</td>
+                            <td>编码规范</td>
+                            <td><span class="priority low">低</span></td>
+                            <td>重复导入datetime模块</td>
+                            <td>在文件顶部统一导入，避免重复导入</td>
+                            <td>后端开发</td>
+                            <td><span class="status pending">待处理</span></td>
+                        </tr>
+                        <tr>
+                            <td>7</td>
+                            <td>dashboard/views.py</td>
+                            <td>全局</td>
+                            <td>可维护性</td>
+                            <td><span class="priority medium">中</span></td>
+                            <td>函数过长，dashboard_home函数有144行</td>
+                            <td>拆分大函数为多个小函数，提高可读性</td>
+                            <td>后端开发</td>
+                            <td><span class="status pending">待处理</span></td>
+                        </tr>
+                        <tr>
+                            <td>8</td>
+                            <td>dashboard/views.py</td>
+                            <td>54, 755</td>
+                            <td>架构设计</td>
+                            <td><span class="priority medium">中</span></td>
+                            <td>使用session存储业务数据，不适合生产环境</td>
+                            <td>将配置数据存储到数据库中，提高数据持久性</td>
+                            <td>架构师</td>
+                            <td><span class="status pending">待处理</span></td>
+                        </tr>
+                        <tr>
+                            <td>9</td>
+                            <td>所有模块</td>
+                            <td>全局</td>
+                            <td>安全性</td>
+                            <td><span class="priority high">高</span></td>
+                            <td>缺少输入验证和SQL注入防护</td>
+                            <td>添加输入验证，使用Django ORM防止SQL注入</td>
+                            <td>全体开发</td>
+                            <td><span class="status pending">待处理</span></td>
+                        </tr>
+                        <tr>
+                            <td>10</td>
+                            <td>所有模块</td>
+                            <td>全局</td>
+                            <td>可维护性</td>
+                            <td><span class="priority low">低</span></td>
+                            <td>缺少单元测试和文档</td>
+                            <td>添加pytest测试用例和API文档</td>
+                            <td>测试工程师</td>
+                            <td><span class="status pending">待处理</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 30px;">
+                    <h3 style="color: #1e3c72; margin-bottom: 15px;">🔍 关键代码片段分析</h3>
+
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #dc3545;">
+                        <h4 style="color: #dc3545; margin-bottom: 10px;">❌ 严重安全问题 - 明文密码存储</h4>
+                        <div class="codesnippet">
+<pre># dashboard/views.py 第959-961行
+if employee.password != old_password:  # 明文比较
+    return JsonResponse({'success': False, 'message': '原密码不正确'})
+employee.password = new_password  # 明文存储</pre>
+                        </div>
+                        <p><strong>风险：</strong> 密码以明文形式存储在数据库中，一旦数据库泄露，所有用户密码将完全暴露。</p>
+                        <p><strong>建议：</strong> 使用Django内置的<span class="highlight">make_password()</span>和<span class="highlight">check_password()</span>函数。</p>
+                    </div>
+
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ffc107;">
+                        <h4 style="color: #856404; margin-bottom: 10px;">⚠️ CSRF保护被禁用</h4>
+                        <div class="code-snippet">
+<pre># dashboard/views.py 多处使用
+@csrf_exempt
+@require_POST
+def update_company_top_tasks(request):
+    # 禁用了CSRF保护的POST请求</pre>
+                        </div>
+                        <p><strong>风险：</strong> 容易受到跨站请求伪造攻击。</p>
+                        <p><strong>建议：</strong> 移除@csrf_exempt装饰器，在前端正确处理CSRF token。</p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 5px;">
+                    <h4 style="color: #1565c0; margin-bottom: 10px;">说明：</h4>
+                    <p><strong>问题类型：</strong> 包括编码风格、逻辑错误、性能问题、安全性漏洞、可维护性问题等。</p>
+                    <p><strong>优先级：</strong> 高（影响安全或核心功能）、中（影响性能或用户体验）、低（代码质量改进）。</p>
+                    <p><strong>状态：</strong> 严重（需立即修复）、待处理、已解决、已验证等。</p>
+                </div>
+            </section>
+
+            <!-- 评审总结 -->
+            <section class="section">
+                <h2 class="section-title">评审总结</h2>
+                <div class="summary-box">
+                    <h3 style="margin-bottom: 15px;">总体评价</h3>
+                    <p>本次提交的企业任务管理系统在功能实现上较为完整，Django框架使用得当，模块化设计合理。但存在严重的安全性问题需要立即修复。</p>
+
+                    <h4 style="margin: 20px 0 10px 0;">✅ 主要优点：</h4>
+                    <ul style="margin: 15px 0; padding-left: 20px;">
+                        <li>功能完整：包含员工管理、任务分配、权限控制等企业级功能</li>
+                        <li>架构合理：使用Django框架，MVC模式清晰</li>
+                        <li>权限控制：实现了基于角色的权限管理</li>
+                        <li>用户体验：支持移动端适配，界面友好</li>
+                    </ul>
+
+                    <h4 style="margin: 20px 0 10px 0;">❌ 主要问题：</h4>
+                    <ul style="margin: 15px 0; padding-left: 20px;">
+                        <li><strong>严重安全漏洞：</strong> 密码明文存储、CSRF保护被禁用</li>
+                        <li><strong>性能问题：</strong> 大量调试语句、硬编码查询限制</li>
+                        <li><strong>代码质量：</strong> 函数过长、重复导入、缺少文档</li>
+                        <li><strong>架构问题：</strong> 使用session存储业务数据</li>
+                    </ul>
+
+                    <div class="summary-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">10</span>
+                            <span class="stat-label">发现问题总数</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">3</span>
+                            <span class="stat-label">高优先级问题</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">5</span>
+                            <span class="stat-label">中优先级问题</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">2</span>
+                            <span class="stat-label">低优先级问题</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-item" style="margin-top: 20px;">
+                    <div class="info-label">🎯 修复优先级建议：</div>
+                    <div>
+                       <p><strong>1. 立即修复（本周内）：</strong></p>
+                        <ul style="padding-left: 20px; margin: 10px 0;">
+                            <li>密码加密存储和验证</li>
+                            <li>启用CSRF保护</li>
+                            <li>添加输入验证</li>
+                        </ul>
+
+                        <p><strong>2. 短期优化（2周内）：</strong></p>
+                        <ul style="padding-left: 20px; margin: 10px 0;">
+                            <li>移除调试语句，配置日志系统</li>
+                            <li>实现分页机制</li>
+                            <li>重构长函数</li>
+                        </ul>
+
+                        <p><strong>3. 长期改进（1个月内）：</strong></p>
+                        <ul style="padding-left: 20px; margin: 10px 0;">
+                            <li>完善单元测试</li>
+                            <li>添加API文档</li>
+                            <li>优化数据库设计</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 工具报告 -->
+            <section class="section">
+                <h2 class="section-title">工具报告</h2>
+                <div class="info-item">
+                    <div class="info-label">推荐使用的代码质量工具：</div>
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        <li><strong>静态代码分析：</strong> Pylint, Flake8, Bandit (安全扫描)</li>
+                        <li><strong>代码格式化：</strong> Black, isort (导入排序)</li>
+                        <li><strong>类型检查：</strong> mypy (可选，提高代码质量)</li>
+                        <li><strong>测试覆盖率：</strong> Coverage.py</li>
+                        <li><strong>Django专用：</strong> django-extensions, django-debug-toolbar</li>
+                    </ul>
+                </div>
+                <div class="info-item" style="margin-top: 15px;">
+                    <div class="info-label">建议的CI/CD配置：</div>
+                    <div class="code-snippet">
+<pre># .github/workflows/django.yml 示例
+name: Django CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+    - name: Run tests
+      run: |
+        python manage.py test
+    - name: Run security check
+      run: |
+        bandit -r . -f json</pre>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer class="footer">
+            <p>© 2024 北京交通大学软件学院 - 专业课综合实训III</p>
+            <p style="margin-top: 5px; opacity: 0.8;">本报告基于实际代码分析生成，建议优先修复安全性问题</p>
+        </footer>
+    </div>
+</body>
+</html>

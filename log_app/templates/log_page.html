@@ -1,0 +1,765 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}日志管理{% endblock %}
+
+{% block extra_head %}
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #06b6d4;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #3b82f6;
+            --dark-color: #1f2937;
+            --light-color: #f8fafc;
+            --border-radius: 12px;
+            --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --box-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .top-bar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-lg);
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .top-bar h2 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .top-bar h2 i {
+            color: var(--primary-color);
+        }
+
+        .filter-form {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .log-item {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none !important;
+            border-bottom: 1px solid #e5e7eb !important;
+            padding: 20px !important;
+            background: white;
+        }
+
+        .log-item:hover {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+            transform: translateX(4px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .log-item:last-child {
+            border-bottom: none !important;
+        }
+
+        .log-content {
+            flex: 1;
+        }
+
+        .log-content strong {
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+        .log-actions {
+            flex-shrink: 0;
+            display: flex;
+            gap: 8px;
+        }
+
+        .card {
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-lg);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px 24px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            border: none;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            padding: 10px 20px;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning-color), #d97706);
+            border: none;
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-color), #dc2626);
+            border: none;
+        }
+
+        .modal-header.bg-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+        }
+
+        .list-group-item {
+            border-radius: 0;
+        }
+
+        .text-muted {
+            color: #6b7280 !important;
+        }
+
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+            color: #9ca3af;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content" style="max-width: 1400px; margin: 0 auto; padding: 24px;">
+    <div class="top-bar">
+        <h2 style="margin: 0; color: #333; display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-book" style="color: #667eea;"></i> 日志管理
+        </h2>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            {% if is_boss or has_admin_access or can_view_all_logs %}
+            <div style="display: flex; gap: 8px;">
+                <a href="?view_mode=mine{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}{% if request.GET.employee_id %}&employee_id={{ request.GET.employee_id }}{% endif %}" 
+                   class="btn btn-sm" 
+                   style="{% if view_mode == 'mine' %}background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white;{% else %}background: white; color: var(--primary-color); border: 2px solid var(--primary-color);{% endif %} padding: 8px 16px; border-radius: 6px; font-weight: 600; text-decoration: none; transition: all 0.3s;">
+                    <i class="fas fa-user"></i> 我的日志
+                </a>
+                <a href="?view_mode=all{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}{% if request.GET.employee_id %}&employee_id={{ request.GET.employee_id }}{% endif %}" 
+                   class="btn btn-sm" 
+                   style="{% if view_mode == 'all' %}background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white;{% else %}background: white; color: var(--primary-color); border: 2px solid var(--primary-color);{% endif %} padding: 8px 16px; border-radius: 6px; font-weight: 600; text-decoration: none; transition: all 0.3s;">
+                    <i class="fas fa-list"></i> 所有日志
+                </a>
+            </div>
+            {% endif %}
+            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#createLogModal">
+                <i class="fas fa-plus"></i> 创建日志
+            </button>
+        </div>
+    </div>
+
+    <!-- 筛选表单 -->
+    <div class="filter-form">
+        <form method="GET" class="row g-3">
+            {% if view_mode %}<input type="hidden" name="view_mode" value="{{ view_mode }}">{% endif %}
+            <div class="col-md-4">
+                <label class="form-label" style="font-weight: 600; color: var(--dark-color); margin-bottom: 8px;">
+                    <i class="fas fa-calendar-alt" style="color: var(--primary-color);"></i> 选择日期
+                </label>
+                <input type="date" name="date" value="{{ selected_date }}" class="form-control" style="border-radius: 8px; border: 2px solid #e5e7eb; transition: all 0.3s;" onchange="this.form.submit()">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" style="font-weight: 600; color: var(--dark-color); margin-bottom: 8px;">
+                    <i class="fas fa-search" style="color: var(--primary-color);"></i> 搜索日志
+                </label>
+                <input type="text" name="search" value="{{ search|default:'' }}" placeholder="按内容/员工/标签搜索" class="form-control" style="border-radius: 8px; border: 2px solid #e5e7eb;" />
+            </div>
+            {% if view_mode == 'all' %}
+            {% if has_admin_access or is_boss or can_view_all_logs %}
+            <div class="col-md-4">
+                <label class="form-label" style="font-weight: 600; color: var(--dark-color); margin-bottom: 8px;">
+                    <i class="fas fa-user" style="color: var(--primary-color);"></i> 筛选员工
+                </label>
+                <select name="employee_id" class="form-select" style="border-radius: 8px; border: 2px solid #e5e7eb; transition: all 0.3s;" onchange="this.form.submit()">
+                    <option value="">所有员工</option>
+                    {% for emp in all_employees %}
+                        <option value="{{ emp.employee_id }}" {% if request.GET.employee_id == emp.employee_id|stringformat:"s" %}selected{% endif %}>
+                            {{ emp.employee_name }} ({{ emp.work_id }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            {% endif %}
+            <div class="col-12">
+                <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> 搜索</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 日志列表 -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-book"></i> 
+            {% if view_mode == 'all' %}所有日志{% else %}我的日志{% endif %}
+            <small style="opacity: 0.9; font-size: 0.9rem;">(点击行查看详情)</small>
+        </div>
+        <ul class="list-group list-group-flush">
+            {% for log in logs %}
+            <li class="list-group-item d-flex justify-content-between align-items-center log-item" onclick="showDetail({{ log.log_id }})">
+
+                <div class="log-content">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                        <strong>{{ log.employee.employee_name }}</strong>
+                        <span style="padding: 4px 12px; background: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(6, 182, 212, 0.1)); border-radius: 12px; font-size: 0.85rem; color: var(--primary-color); font-weight: 600;">
+                            {{ log.get_log_type_display }}
+                        </span>
+                        <small class="text-muted" style="font-size: 0.85rem;">
+                            <i class="fas fa-clock"></i> {{ log.log_time|date:"Y-m-d H:i" }}
+                        </small>
+                    </div>
+                    <div style="color: #374151; line-height: 1.6;">{{ log.content|truncatechars:60 }}</div>
+                    {% if log.image_url %}
+                    <div style="margin-top:12px;">
+                        <img src="{{ MEDIA_URL }}{{ log.image_url }}" alt="日志附件" style="max-width:220px; border-radius:10px; box-shadow: var(--box-shadow);">
+                    </div>
+                    {% endif %}
+                    {% if log.tags.all %}
+                    <div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
+                        {% for tag in log.tags.all %}
+                        <span style="padding: 2px 8px; background: #f3f4f6; border-radius: 6px; font-size: 0.75rem; color: #6b7280;">
+                            #{{ tag.tag_name }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="log-actions" onclick="event.stopPropagation()">
+                    <button class="btn btn-sm btn-warning text-white" onclick="editLog({{ log.log_id }})" style="border-radius: 6px;">
+                        <i class="fas fa-edit"></i> 编辑
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteLog({{ log.log_id }})" style="border-radius: 6px;">
+                        <i class="fas fa-trash"></i> 删除
+                    </button>
+                </div>
+            </li>
+            {% empty %}
+            <li class="list-group-item">
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p style="font-size: 1.1rem; margin: 0;">暂无日志记录</p>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+
+<!-- 创建日志模态框 -->
+<div class="modal fade" id="createLogModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="fas fa-plus-circle"></i> 创建日志</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="关闭"></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" id="log-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-tag"></i> 日志类型 <span class="text-danger">*</span></label>
+                    <select name="log_type" class="form-select" required>
+                        <option value="">请选择类型</option>
+                        {% for choice in log_type_choices %}
+                        <option value="{{ choice.1 }}">{{ choice.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-smile"></i> 情绪标签</label>
+                    <select name="emotion_tag" class="form-select">
+                        <option value="">请选择情绪</option>
+                        {% for choice in emotion_choices %}
+                        <option value="{{ choice.1 }}">{{ choice.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label"><i class="fas fa-tags"></i> 标签（可多选）</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 12px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; background: #f9fafb;">
+                    {% for tag in tags %}
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <input type="checkbox" name="tags" value="{{ tag.tag_id }}" id="tag_{{ tag.tag_id }}" style="cursor: pointer;">
+                        <label for="tag_{{ tag.tag_id }}" style="margin: 0; cursor: pointer; font-weight: 500; color: var(--dark-color);">
+                            {{ tag.tag_name }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label"><i class="fas fa-align-left"></i> 日志内容 <span class="text-danger">*</span></label>
+                <textarea name="content" class="form-control" rows="4" placeholder="请输入日志内容..." required></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label"><i class="fas fa-location-dot"></i> 地理位置</label>
+                <div class="d-flex align-items-center gap-2">
+                    <div id="webLocText" class="text-muted">正在获取当前位置…</div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="webLocRefresh">刷新</button>
+                </div>
+                <input type="hidden" name="location_lat" id="locationLat">
+                <input type="hidden" name="location_lng" id="locationLng">
+                <input type="hidden" name="location_name" id="locationName">
+            </div>
+            <div class="mb-3">
+                <label class="form-label"><i class="fas fa-paperclip"></i> 附件（可选）</label>
+                <input type="file" name="log_image" class="form-control" accept="image/*">
+                <small class="text-muted">支持上传图片，建议不超过 5MB</small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> 提交日志</button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 日志详情模态框 -->
+<div class="modal fade" id="logModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">日志详情</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+      </div>
+      <div class="modal-body" id="logDetailBody">
+        <!-- JS 动态填充内容 -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 编辑日志模态框 -->
+<div class="modal fade" id="editLogModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">编辑日志</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+      </div>
+      <div class="modal-body">
+        <!-- 你可以放置编辑表单 -->
+        <form id="editLogForm" enctype="multipart/form-data">
+          <input type="hidden" id="editEmployee">
+          <div class="mb-3">
+            <label class="form-label">日志类型</label>
+            <select class="form-select" id="editLogType">
+                {% for key, val in log_type_choices %}
+                <option value="{{ val }}">{{ val }}</option>
+                {% endfor %}
+            </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">情绪标签</label>
+                <select class="form-select" id="editEmotionTag">
+                    <option value="">请选择情绪</option>
+                    {% for key, val in emotion_choices %}
+                        <option value="{{ val }}">{{ val }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+          <div class="mb-3">
+            <label class="form-label">日志内容</label>
+            <textarea class="form-control" id="editContent" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">附件</label>
+            <input type="file" id="editLogImage" class="form-control" accept="image/*">
+            <div id="editImagePreview" class="mt-2 d-none">
+              <img src="" alt="当前附件" style="max-width:100%; border-radius:8px;">
+            </div>
+            <div class="form-check mt-2">
+              <input class="form-check-input" type="checkbox" id="editRemoveImage">
+              <label class="form-check-label" for="editRemoveImage">移除当前附件</label>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">标签</label>
+            <select class="form-select" id="editTags" multiple>
+              {% for tag in tags %}
+              <option value="{{ tag.tag_id }}">{{ tag.tag_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="button" class="btn btn-success" onclick="saveEditLog()">保存</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+let currentEditLogId = null;
+
+// 字段值映射表 - 用于显示值到数据库值的转换
+const displayToDbMapping = {
+    log_type: {
+        '工作': 'WORK',
+        '会议': 'MEETING',
+        '沟通': 'COMMUNICATION',
+        '开发': 'DEVELOPMENT',
+        '学习': 'STUDY'
+    },
+    emotion_tag: {
+        '积极': 'ACTIVE',
+        '专注': 'FOCUSED',
+        '满意': 'SATISFIED',
+        '疲惫': 'TIRED'
+    }
+};
+
+// 数据库值到显示值的映射
+const dbToDisplayMapping = {
+    log_type: {
+        'WORK': '工作',
+        'MEETING': '会议',
+        'COMMUNICATION': '沟通',
+        'DEVELOPMENT': '开发',
+        'STUDY': '学习'
+    },
+    emotion_tag: {
+        'ACTIVE': '积极',
+        'FOCUSED': '专注',
+        'SATISFIED': '满意',
+        'TIRED': '疲惫'
+    }
+};
+
+function showDetail(id){
+    fetch(`/logs/${id}/`).then(res=>res.json()).then(data=>{
+        let html = `
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>员工：</strong>${data.employee}</p>
+                    <p><strong>时间：</strong>${data.log_time}</p>
+                    <p><strong>类型：</strong>${data.log_type}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>情绪：</strong>${data.emotion_tag || '无'}</p>
+                    <p><strong>标签：</strong>${data.tags.join(', ') || '无'}</p>
+                    ${data.location_name ? `<p><strong>位置：</strong>${data.location_name}</p>` : ''}
+                </div>
+            </div>
+            <hr>
+            <div>
+                <strong>日志内容：</strong>
+                <div class="mt-2 p-3 bg-light rounded">${data.content}</div>
+            </div>
+            ${data.image_url ? `<div class="mt-3"><strong>附件：</strong><div class="mt-2"><img src="${data.image_url}" alt="日志附件" style="max-width:100%; border-radius:12px;"></div></div>` : ''}
+        `;
+        document.getElementById('logDetailBody').innerHTML = html;
+        new bootstrap.Modal(document.getElementById('logModal')).show();
+    });
+}
+
+function deleteLog(id){
+    if(confirm("确定删除该日志吗？")){
+        fetch(`/logs/${id}/delete/`, {method: 'POST', headers: {'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')}})
+        .then(res=>res.json()).then(data=>{
+            if(data.success){location.reload();}else{alert("删除失败");}
+        });
+    }
+}
+
+function editLog(id){
+    currentEditLogId = id;
+    // 获取日志详情并填充到编辑表单
+    fetch(`/logs/${id}/`).then(res=>res.json()).then(data=>{
+        console.log('获取到的日志数据:', data);
+
+        // 填充表单字段
+        document.getElementById('editEmployee').value = data.employee_id || '';
+
+        // 转换数据库值到显示值
+        const logTypeDisplay = dbToDisplayMapping.log_type[data.log_type_raw] || '';
+        const emotionDisplay = dbToDisplayMapping.emotion_tag[data.emotion_tag_raw] || '';
+
+        document.getElementById('editLogType').value = logTypeDisplay;
+        document.getElementById('editEmotionTag').value = emotionDisplay;
+        document.getElementById('editContent').value = data.content || '';
+
+        console.log('设置的表单值:', {
+            employee: data.employee_id,
+            log_type: logTypeDisplay,
+            emotion_tag: emotionDisplay,
+            content: data.content
+        });
+
+        // 处理多选标签
+        const tagSelect = document.getElementById('editTags');
+        Array.from(tagSelect.options).forEach(option => {
+            option.selected = data.tag_ids && data.tag_ids.includes(parseInt(option.value));
+        });
+
+        // 附件预览
+        const fileInput = document.getElementById('editLogImage');
+        const preview = document.getElementById('editImagePreview');
+        const previewImg = preview.querySelector('img');
+        const removeCheckbox = document.getElementById('editRemoveImage');
+        fileInput.value = '';
+        removeCheckbox.checked = false;
+        if(data.image_url){
+            preview.classList.remove('d-none');
+            previewImg.src = data.image_url;
+        }else{
+            preview.classList.add('d-none');
+            previewImg.src = '';
+        }
+
+        // 显示编辑弹窗
+        new bootstrap.Modal(document.getElementById('editLogModal')).show();
+    }).catch(error => {
+        console.error('获取日志详情失败:', error);
+        alert('获取日志详情失败，请重试');
+    });
+}
+
+function saveEditLog(){
+    if(!currentEditLogId) return;
+
+    // 获取表单数据
+    const employee = document.getElementById('editEmployee').value;
+    const logType = document.getElementById('editLogType').value;
+    const emotionTag = document.getElementById('editEmotionTag').value;
+    const content = document.getElementById('editContent').value;
+    const tagSelect = document.getElementById('editTags');
+    const selectedTags = Array.from(tagSelect.selectedOptions).map(option => option.value);
+
+    // 验证必填字段
+    if(!employee || !logType || !content){
+        alert('请填写所有必填字段（员工、日志类型、日志内容）');
+        return;
+    }
+
+    // 构建请求数据
+    const formData = new FormData();
+    formData.append('employee', parseInt(employee));
+    formData.append('log_type', logType); // 直接使用中文值，后端会转换
+    formData.append('emotion_tag', emotionTag); // 直接使用中文值，后端会转换
+    formData.append('content', content);
+    selectedTags.forEach(tag => formData.append('tags', tag));
+    const imageFile = document.getElementById('editLogImage').files[0];
+    if(imageFile){
+        formData.append('log_image', imageFile);
+    }
+    if(document.getElementById('editRemoveImage').checked){
+        formData.append('remove_image', '1');
+    }
+
+    console.log('发送的数据:', {
+        employee: parseInt(employee),
+        log_type: logType,
+        emotion_tag: emotionTag,
+        content: content,
+        tags: selectedTags
+    });
+
+    // 发送更新请求
+    fetch(`/logs/${currentEditLogId}/update/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        },
+        body: formData
+    }).then(res => {
+        console.log('响应状态码:', res.status);
+        return res.json();
+    }).then(data => {
+        console.log('响应数据:', data);
+
+        if(data.success){
+            // 关闭弹窗并刷新页面
+            bootstrap.Modal.getInstance(document.getElementById('editLogModal')).hide();
+            location.reload();
+        } else {
+            // 显示详细错误信息
+            let errorMessage = "更新失败：\n";
+            if(data.errors){
+                Object.keys(data.errors).forEach(field => {
+                    errorMessage += `${field}: ${data.errors[field].join(', ')}\n`;
+                });
+            } else {
+                errorMessage += data.message || "未知错误";
+            }
+            alert(errorMessage);
+        }
+    }).catch(error => {
+        console.error('更新失败:', error);
+        alert('更新失败: ' + error.message);
+    });
+}
+// ----- 自动定位（Web端） -----
+const AMAP_WEB_KEY = '{{ amap_key|default:"" }}';
+const AMAP_SECURITY_JS_CODE = '{{ amap_security_js_code|default:"" }}';
+if(AMAP_SECURITY_JS_CODE){
+  window._AMapSecurityConfig = {
+    securityJsCode: AMAP_SECURITY_JS_CODE,
+  };
+}
+
+async function fetchAmaps(url){
+    const ctrl = new AbortController();
+    const id = setTimeout(()=> ctrl.abort(), 5000);
+    try{
+        const r = await fetch(url, { signal: ctrl.signal, credentials: 'include' });
+        clearTimeout(id);
+        return await r.json();
+    }catch(e){ clearTimeout(id); throw e; }
+}
+function loadAmapSdk(){
+    return new Promise((resolve, reject)=>{
+        if(window.AMap){ resolve(); return; }
+        const s = document.createElement('script');
+        s.src = `https://webapi.amap.com/maps?v=2.0&key=${encodeURIComponent(AMAP_WEB_KEY)}&plugin=AMap.Geolocation`;
+        s.onload = ()=> resolve();
+        s.onerror = ()=> reject(new Error('AMap SDK 加载失败'));
+        document.head.appendChild(s);
+    });
+}
+function amapGeolocate(){
+    return new Promise(async (resolve, reject)=>{
+        try{
+            await loadAmapSdk();
+            const geo = new AMap.Geolocation({ enableHighAccuracy:true, timeout:5000, convert:true });
+            geo.getCurrentPosition(function(status, result){
+                if(status === 'complete' && result){
+                    const lnglat = result.position || result.lnglat;
+                    const addr = result.formattedAddress || result.address || '';
+                    resolve({ lng: lnglat.lng, lat: lnglat.lat, address: addr });
+                }else{ reject(new Error(result ? (result.message||'定位失败') : '定位失败')); }
+            });
+        }catch(e){ reject(e); }
+    });
+}
+function composeAddrFromRegeo(rg){
+    if(!rg) return '';
+    let addr = rg.formatted_address || '';
+    if(addr) return addr;
+    const ac = rg.addressComponent || {};
+    const parts = [];
+    const prov = ac.province || '';
+    const city = ac.city || '';
+    if(prov) parts.push(prov);
+    if(city && city !== prov) parts.push(city);
+    if(ac.district) parts.push(ac.district);
+    if(ac.township) parts.push(ac.township);
+    const sn = ac.streetNumber || {};
+    const streetPart = [(sn.street || ''), (sn.number || '')].join('').trim();
+    if(streetPart) parts.push(streetPart);
+    if(!streetPart){
+        const pois = rg.pois || [];
+        if(pois.length>0){ parts.push(pois[0].name || ''); }
+    }
+    return parts.filter(Boolean).join(' ');
+}
+async function ensureWebLocation(){
+    const txt = document.getElementById('webLocText');
+    if(!txt) return;
+    txt.textContent = '正在获取当前位置…';
+    
+    // 仅保留高德 API 定位逻辑
+    try{
+        const res = await amapGeolocate();
+        document.getElementById('locationLat').value = String(res.lat);
+        document.getElementById('locationLng').value = String(res.lng);
+        let name = res.address || '';
+        
+        // 如果 SDK 未返回详细地址，尝试调用后端逆地理接口
+        if(!name && AMAP_WEB_KEY){
+            try {
+                const j = await fetchAmaps(`/logs/api/amap/regeo/?lng=${encodeURIComponent(res.lng)}&lat=${encodeURIComponent(res.lat)}`);
+                name = (j && j.status==='1' && j.regeocode) ? composeAddrFromRegeo(j.regeocode) : '';
+            } catch(e) { console.error(e); }
+        }
+        
+        document.getElementById('locationName').value = name || '';
+        txt.textContent = name ? `📍 ${name}` : `📍 (${res.lat.toFixed(6)}, ${res.lng.toFixed(6)})`;
+    }catch(e){
+        console.error(e);
+        // 定位失败尝试 IP 定位兜底
+        try{
+             if(AMAP_WEB_KEY){
+                const j = await fetchAmaps(`/logs/api/amap/ip/`);
+                const ipName = [j.province, j.city].filter(Boolean).join(' ');
+                if(ipName){
+                    document.getElementById('locationName').value = ipName;
+                    txt.textContent = `📍 ${ipName}`;
+                    return;
+                }
+            }
+        }catch(_){}
+        txt.textContent = '未能获取位置';
+    }
+}
+
+document.getElementById('createLogModal').addEventListener('shown.bs.modal', ()=>{ ensureWebLocation(); });
+document.getElementById('webLocRefresh').addEventListener('click', ()=>{ ensureWebLocation(); });
+</script>
+{% endblock %}
